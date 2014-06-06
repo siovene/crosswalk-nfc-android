@@ -1,4 +1,1 @@
-(function() {
-    alert("FOO");
-    //alert(echo.echo("Hello CrossWalk"));
-})();
+alert(echo.echo("Hello Crosswalk"));

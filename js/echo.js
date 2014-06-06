@@ -1,3 +1,3 @@
 exports.echo = function(s) {
-    return extensions.internal.sendSyncMessage(s);
+    return extension.internal.sendSyncMessage(s);
 }
