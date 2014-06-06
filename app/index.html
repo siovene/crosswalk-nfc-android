@@ -5,6 +5,17 @@
               content="width=device-width, initial-scale=1.0">
         <meta charset="utf-8">
         <title>Echo Crosswalk</title>
+
+        <style>
+            p#response { display: none; }
+            p#response .you {
+                font-weight: bold;
+            }
+            p#response .crosswalk {
+                font-weight: bold;
+                color: green;
+            }
+        </style>
     </head>
 
     <body>
@@ -12,10 +23,13 @@
             <h1>Echo Crosswalk</h1>
         </header>
 
-        <form onsubmit="sayIt()">
-            <input type="text" name="text" />
-            <input type="submit" value="Say it" />
-        </form>
+        <input type="text" id="text" />
+        <button onclick="sayIt()">Say it</button>
+
+        <p id="response">
+            You said <span class="you"></span>,
+            Crosswalk echoed <span class="crosswalk"></span>.
+        </p>
 
         <script src="js/main.js"></script>
     </body>
