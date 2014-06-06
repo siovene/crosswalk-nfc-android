@@ -1,0 +1,13 @@
+{
+    "name": "echo_app",
+    "version": "0.1",
+    "app": {
+        "launch": {
+            "local_path": "assets/www/index.html"
+        }
+    },
+    "icons": {
+        "96": "icon.png"
+    }
+}
+

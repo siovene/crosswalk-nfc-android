@@ -1,6 +1,6 @@
 {
     "name": "echo",
     "class": "org.crosswalkproject.sample.Echo",
-    "jsapi" "echo.js",
+    "jsapi": "echo.js",
     "permissions": []
 }
