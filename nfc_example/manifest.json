@@ -1,5 +1,5 @@
 {
-    "name": "echo_app",
+    "name": "nfc_example",
     "version": "0.1",
     "app": {
         "launch": {

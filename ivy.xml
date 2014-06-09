@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.2">
-  <info organisation="org.crosswalkproject.sample" module="echo" />
+  <info organisation="org.crosswalkproject.nfc" module="nfc" />
   <dependencies>
     <dependency org="com.google.android"
                 name="android"

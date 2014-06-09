@@ -1,3 +1,3 @@
-exports.echo = function(s) {
+exports.nfc = function(s) {
     return extension.internal.sendSyncMessage(s);
 }

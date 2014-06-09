@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:ivy="antlib:org.apache.ivy.ant"
-         name="echo" default="dist">
+         name="nfc" default="dist">
   <!-- Java source -->
   <property name="src" value="java" />
 
@@ -20,7 +20,7 @@
   <property name="build" value="build" />
 
   <!-- final location for the built extension -->
-  <property name="dist" value="echo" />
+  <property name="dist" value="nfc" />
 
   <!-- classpath containing the Ivy Ant tasks jar file -->
   <path id="ivy.lib.path">
@@ -88,11 +88,11 @@
       </fileset>
     </unjar>
 
-    <jar destfile="${dist}/echo.jar">
+    <jar destfile="${dist}/nfc.jar">
       <fileset dir="${build}" excludes="META-INF/**" />
     </jar>
 
-    <copy file="echo.json" todir="${dist}" />
-    <copy file="js/echo.js" todir="${dist}" />
+    <copy file="nfc.json" todir="${dist}" />
+    <copy file="js/nfc.js" todir="${dist}" />
   </target>
 </project>
