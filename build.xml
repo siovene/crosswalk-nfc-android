@@ -94,5 +94,12 @@
 
     <copy file="nfc.json" todir="${dist}" />
     <copy file="js/nfc.js" todir="${dist}" />
+
+    <!--
+    Also copy to Crosswalk's nfc_example directory for packing.
+    -->
+    <copy todir="lib/crosswalk-${crosswalk-version}/nfc_example/xwalk-extensions/nfc">
+        <fileset dir="nfc" />
+    </copy>
   </target>
 </project>

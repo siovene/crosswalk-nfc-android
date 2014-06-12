@@ -10,5 +10,15 @@ public class NFC extends XWalkExtensionClient {
                 XWalkExtensionContextClient xwalkContext) {
         super(name, jsApiContent, xwalkContext);
     }
+
+    @Override
+    public void onMessage(int instanceId, String message) {
+        postMessage(instanceId, "");
+    }
+
+    @Override
+    public String onSyncMessage(int instanceId, String message) {
+        return "";
+    }
 }
 
