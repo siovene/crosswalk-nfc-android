@@ -11,4 +11,4 @@ ant
                     --extensions=$CODE_PATH/nfc \
                     --verbose
 ) &&
-adb install -r $CODE_PATH/lib/crosswalk-${CROSSWALK_VERSION}/nfc_example_0.1_x86.apk
+adb install -r $CODE_PATH/lib/crosswalk-${CROSSWALK_VERSION}/nfc_example_0.1_arm.apk
