@@ -28,7 +28,7 @@ public class NFC extends XWalkExtensionClient {
         InternalProtocolMessage ipm = gson.fromJson(
             message, InternalProtocolMessage.class);
 
-        if(ipm.action == "test") {
+        if(ipm.action.equals("test")) {
             return test();
         }
 

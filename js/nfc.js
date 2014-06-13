@@ -1,7 +1,9 @@
 exports.NFCManager = {
     test: function() {
-        return extension.internal.sendSyncMessage({
+        var message = JSON.stringify({
             "action": "test"
         });
+
+        return extension.internal.sendSyncMessage(message);
     }
 }
