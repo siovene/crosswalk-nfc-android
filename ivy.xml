@@ -6,5 +6,9 @@
                 name="android"
                 rev="4.0.1.2"
                 conf="default->master" />
+    <dependency org="com.google.code.gson"
+                name="gson"
+                rev="2.2.4"
+                conf="default->master" />
   </dependencies>
 </ivy-module>

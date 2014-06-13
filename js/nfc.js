@@ -1,3 +1,7 @@
-exports.nfc = function(s) {
-    return extension.internal.sendSyncMessage(s);
+exports.NFCManager = {
+    test: function() {
+        return extension.internal.sendSyncMessage({
+            "action": "test"
+        });
+    }
 }
