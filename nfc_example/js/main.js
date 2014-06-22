@@ -1,7 +1,13 @@
-(function(win) {
-    win.test = function() {
-        return nfc.NFCManager.test();
-    }
-})(window);
+// Event handlers
+nfc.NFCManager.onpoweron = function() {
+    document.getElementById("power-status").textContent = "ON";
+}
+nfc.NFCManager.onpoweroff = function() {
+    document.getElementById("power-status").textContent = "OFF";
+}
 
-alert(test());
+if (nfc.NFCManager.powered) {
+    nfc.NFCManager.onpoweron();
+} else {
+    nfc.NFCManager.onpoweroff();
+}
