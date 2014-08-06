@@ -1,105 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:ivy="antlib:org.apache.ivy.ant"
-         name="nfc" default="dist">
-  <!-- Java source -->
-  <property name="src" value="java" />
+<project name="nfc_example" default="help">
+    <!-- The local.properties file is created and updated by the 'android' tool.
+         It contains the path to the SDK. It should *NOT* be checked into
+         Version Control Systems. -->
+    <property file="local.properties" />
 
-  <!-- downloaded third party libraries -->
-  <property name="lib" value="lib" />
+    <!-- The ant.properties file can be created by you. It is only edited by the
+         'android' tool to add properties to it.
+         This is the place to change some Ant specific build properties.
+         Here are some properties you may want to change/update:
 
-  <!-- Crosswalk Android version -->
-  <property name="crosswalk-version-category"
-            value="stable" />
-  <property name="crosswalk-version"
-            value="5.34.104.5" />
+         source.dir
+             The name of the source directory. Default is 'src'.
+         out.dir
+             The name of the output directory. Default is 'bin'.
 
-  <!-- location of downloaded Crosswalk Android file -->
-  <property name="crosswalk-zip" value="${lib}/crosswalk.zip" />
+         For other overridable properties, look at the beginning of the rules
+         files in the SDK, at tools/ant/build.xml
 
-  <!-- temporary build directory -->
-  <property name="build" value="build" />
+         Properties related to the SDK location or the project target should
+         be updated using the 'android' tool with the 'update' action.
 
-  <!-- final location for the built extension -->
-  <property name="dist" value="nfc" />
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems.
 
-  <!-- classpath containing the Ivy Ant tasks jar file -->
-  <path id="ivy.lib.path">
-    <fileset dir="tools" includes="*.jar"/>
-  </path>
+         -->
+    <property file="ant.properties" />
 
-  <!-- delete + make the temporary build directories -->
-  <target name="prepare">
-    <delete dir="${build}" quiet="true" />
-    <delete dir="${dist}" quiet="true" />
+    <!-- if sdk.dir was not set from one of the property file, then
+         get it from the ANDROID_HOME env var.
+         This must be done before we load project.properties since
+         the proguard config can use sdk.dir -->
+    <property environment="env" />
+    <condition property="sdk.dir" value="${env.ANDROID_HOME}">
+        <isset property="env.ANDROID_HOME" />
+    </condition>
 
-    <mkdir dir="${build}" />
-    <mkdir dir="${lib}" />
-    <mkdir dir="${dist}" />
-  </target>
+    <!-- The project.properties file is created and updated by the 'android'
+         tool, as well as ADT.
 
-  <!-- download dependencies using Ivy -->
-  <target name="download-deps" depends="prepare">
-    <taskdef resource="org/apache/ivy/ant/antlib.xml"
-             uri="antlib:org.apache.ivy.ant"
-             classpathref="ivy.lib.path" />
-    <ivy:retrieve pattern="${lib}/[artifact]-[revision].[ext]" />
-  </target>
+         This contains project specific properties such as project target, and library
+         dependencies. Lower level build properties are stored in ant.properties
+         (or in .classpath for Eclipse projects).
 
-  <!-- check whether the Crosswalk zip file is present -->
-  <target name="check-crosswalk-present" depends="prepare">
-    <available file="${crosswalk-zip}"
-               property="crosswalk-zip.present"/>
-  </target>
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems. -->
+    <loadproperties srcFile="project.properties" />
 
-  <!-- manually get crosswalk.zip if it's not already there -->
-  <target name="download-crosswalk"
-          depends="prepare, check-crosswalk-present"
-          unless="crosswalk-zip.present">
-    <!-- fetch from the download site -->
-    <get src="https://download.01.org/crosswalk/releases/crosswalk/android/${crosswalk-version-category}/${crosswalk-version}/crosswalk-${crosswalk-version}.zip" dest="${crosswalk-zip}" />
-
-    <!-- unpack to lib/crosswalk-*/ -->
-    <unzip src="${crosswalk-zip}" dest="${lib}" />
-  </target>
-
-  <!-- compile the extension Java code -->
-  <target name="compile" depends="download-deps, download-crosswalk">
-    <javac includeantruntime="false" srcdir="${src}" destdir="${build}"
-           encoding="utf-8" debug="true" verbose="true">
-      <classpath>
-        <fileset dir="${lib}" includes="*.jar" />
-        <file file="${lib}/crosswalk-${crosswalk-version}/libs/xwalk_app_runtime_java.jar" />
-      </classpath>
-    </javac>
-  </target>
-
-  <!--
-  pack third party Java code and extension code into a single
-  jar, and copy supporting files to the xwalk-audiofs-extension/
-  directory; NB we don't need to pack any Crosswalk jars, as they
-  will be added by the packaging tool; and we don't need android.jar,
-  as that is on the Android target already
-  -->
-  <target name="dist" depends="compile">
-    <unjar dest="${build}">
-      <fileset dir="${lib}">
-        <include name="*.jar" />
-        <exclude name="android*.jar" />
-      </fileset>
-    </unjar>
-
-    <jar destfile="${dist}/nfc.jar">
-      <fileset dir="${build}" excludes="META-INF/**" />
-    </jar>
-
-    <copy file="nfc.json" todir="${dist}" />
-    <copy file="js/nfc.js" todir="${dist}" />
+    <!-- quick check on sdk.dir -->
+    <fail
+            message="sdk.dir is missing. Make sure to generate local.properties using 'android update project' or to inject it through the ANDROID_HOME environment variable."
+            unless="sdk.dir"
+    />
 
     <!--
-    Also copy to Crosswalk's nfc_example directory for packing.
+        Import per project custom build rules if present at the root of the project.
+        This is the place to put custom intermediary targets such as:
+            -pre-build
+            -pre-compile
+            -post-compile (This is typically used for code obfuscation.
+                           Compiled code location: ${out.classes.absolute.dir}
+                           If this is not done in place, override ${out.dex.input.absolute.dir})
+            -post-package
+            -post-build
+            -pre-clean
     -->
-    <copy todir="lib/crosswalk-${crosswalk-version}/nfc_example/xwalk-extensions/nfc">
-        <fileset dir="nfc" />
-    </copy>
-  </target>
+    <import file="custom_rules.xml" optional="true" />
+
+    <!-- Import the actual build file.
+
+         To customize existing targets, there are two options:
+         - Customize only one target:
+             - copy/paste the target into this file, *before* the
+               <import> task.
+             - customize it to your needs.
+         - Customize the whole content of build.xml
+             - copy/paste the content of the rules files (minus the top node)
+               into this file, replacing the <import> task.
+             - customize to your needs.
+
+         ***********************
+         ****** IMPORTANT ******
+         ***********************
+         In all cases you must update the value of version-tag below to read 'custom' instead of an integer,
+         in order to avoid having your file be overridden by tools such as "android update project"
+    -->
+    <!-- version-tag: 1 -->
+    <import file="${sdk.dir}/tools/ant/build.xml" />
+
 </project>

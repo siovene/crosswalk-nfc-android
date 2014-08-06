@@ -1,5 +1,4 @@
-/build
-/nfc
-/lib
+/bin
+/gen
 
 *.swp

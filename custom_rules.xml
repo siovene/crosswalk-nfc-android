@@ -1,0 +1,40 @@
+<project>
+    <target name="-pre-build">
+        <copy todir="${jar.libs.dir}">
+            <fileset dir="/usr/lib/xwalk-android/jar" includes="*.jar" />
+            <fileset dir="/usr/lib/xwalk-android/runtime" includes="armeabi-v7a/*" />
+            <fileset dir="libs/" includes="gson-2.2.4.jar" />
+        </copy>
+        <copy todir="${asset.dir}">
+            <fileset dir="/usr/lib/xwalk-android/assets" includes="*" />
+            <fileset dir="/usr/lib/xwalk-android/assets" includes="jsapi/*" />
+        </copy>
+    </target>
+
+    <path id="project.library.res.folder.path">
+        <filelist>
+            <file name="/usr/lib/xwalk-android/res/content_java/res" />
+            <file name="/usr/lib/xwalk-android/res/content_java/res_crunched" />
+            <file name="/usr/lib/xwalk-android/res/content_java/res_grit" />
+            <file name="/usr/lib/xwalk-android/res/content_java/res_v14_compatibility" />
+            <file name="/usr/lib/xwalk-android/res/ui_java/res" />
+            <file name="/usr/lib/xwalk-android/res/ui_java/res_crunched" />
+            <file name="/usr/lib/xwalk-android/res/ui_java/res_grit" />
+            <file name="/usr/lib/xwalk-android/res/ui_java/res_v14_compatibility" />
+            <file name="/usr/lib/xwalk-android/res/xwalk_core_java/res" />
+            <file name="/usr/lib/xwalk-android/res/xwalk_core_java/res_crunched" />
+            <file name="/usr/lib/xwalk-android/res/xwalk_core_java/res_grit" />
+            <file name="/usr/lib/xwalk-android/res/xwalk_core_java/res_v14_compatibility" />
+        </filelist>
+    </path>
+
+    <path id="project.library.bin.r.file.path">
+        <filelist>
+            <file name="/usr/lib/xwalk-android/R/content_java/R.txt" />
+            <file name="/usr/lib/xwalk-android/R/ui_java/R.txt" />
+            <file name="/usr/lib/xwalk-android/R/xwalk_core_java/R.txt" />
+        </filelist>
+    </path>
+
+    <property name="project.library.packages" value="org.chromium.content;org.chromium.ui;org.xwalk.core"/>
+</project>
