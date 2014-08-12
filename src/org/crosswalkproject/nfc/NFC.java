@@ -71,9 +71,7 @@ public class NFC extends XWalkExtensionClient {
             @Override
             public void onReceive(Context context, Intent intent) {
                 int state = intent.getIntExtra(NFC_EXTRA_ADAPTER_STATE, -1);
-                if(state == NFC_STATE_OFF || state == NFC_STATE_ON) {
-                    detectNfcStateChanges();
-                }
+                detectNfcStateChanges(state);
             }
         };
 
@@ -113,9 +111,9 @@ public class NFC extends XWalkExtensionClient {
         Log.d(NFC_DEBUG_TAG, "Initial NFC state: " + (this.nfcEnabled ? "enabled" : "disabled"));
     }
 
-    private void detectNfcStateChanges() {
+    private void detectNfcStateChanges(int state) {
         Log.d(NFC_DEBUG_TAG, "Detect NFC state changes while previously " + (this.nfcEnabled ? "enabled" : "disabled"));
-        boolean enabled = this.nfcAdapter.isEnabled();
+        boolean enabled = (state == NFC_STATE_ON) || (state == NFC_STATE_TURNING_ON);
 
         Log.d(NFC_DEBUG_TAG, "this.nfcEnabled = " + this.nfcEnabled + ", enabled = " + enabled);
         if(this.nfcEnabled != enabled) {
