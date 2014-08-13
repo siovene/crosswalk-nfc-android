@@ -52,9 +52,11 @@ public class NFC extends XWalkExtensionClient {
     private static IntentFilter nfcStateChangeIntentFilter = new IntentFilter("android.nfc.action.ADAPTER_STATE_CHANGED");
     private Map<Integer, InternalProtocolMessage> nfcStateChangeSubscribers = new HashMap<Integer, InternalProtocolMessage>();
 
-    // Tag discovered
-    private BroadcastReceiver nfcTagDiscoveredBroadcastReceiver;
-    private static IntentFilter nfcTagDiscoveredIntentFilter = new IntentFilter("android.nfc.action.ACTION_TAG_DISCOVERED");
+    // Ndef discovered
+    private BroadcastReceiver nfcNdefDiscoveredBroadcastReceiver;
+    private static IntentFilter nfcNdefDiscoveredIntentFilter = new IntentFilter("android.nfc.action.ACTION_NDEF_DISCOVERED");
+
+    // Ndef subscribers
     private Map<Integer, InternalProtocolMessage> nfcTagDiscoveredSubscribers = new HashMap<Integer, InternalProtocolMessage>();
 
 
@@ -75,13 +77,12 @@ public class NFC extends XWalkExtensionClient {
             }
         };
 
-        this.nfcTagDiscoveredBroadcastReceiver = new BroadcastReceiver() {
+        this.nfcNdefDiscoveredBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 onTagDiscovered();
             }
         };
-
 
         detectInitialNfcState();
         startDetectingNfcStateChanges();
@@ -101,8 +102,8 @@ public class NFC extends XWalkExtensionClient {
 
     private void startDetectingTagDiscoveries() {
         this.androidContext.registerReceiver(
-            nfcTagDiscoveredBroadcastReceiver,
-            this.nfcTagDiscoveredIntentFilter);
+            nfcNdefDiscoveredBroadcastReceiver,
+            this.nfcNdefDiscoveredIntentFilter);
     }
 
 

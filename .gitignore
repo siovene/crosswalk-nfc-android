@@ -1,4 +1,7 @@
 /bin
 /gen
 
+/assets/icudtl.dat
+/assets/xwalk.pak
+
 *.swp
