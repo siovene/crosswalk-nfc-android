@@ -6,10 +6,12 @@ import org.xwalk.app.runtime.extension.XWalkExtensionContextClient;
 
 // Android
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentFilter.MalformedMimeTypeException;
 import android.nfc.NfcAdapter;
 import android.provider.Settings;
 import android.util.Log;
@@ -21,8 +23,7 @@ import java.util.Map;
 // Other
 import com.google.gson.Gson;
 
-
-public class NFC extends XWalkExtensionClient {
+public class NFC extends XWalkExtensionClient implements NFCGlobals {
     private class InternalProtocolMessage {
         private String id;
         private String content;
@@ -35,7 +36,27 @@ public class NFC extends XWalkExtensionClient {
         }
     }
 
-    private static final String NFC_DEBUG_TAG = "XWALK_NFC";
+    private class ForegroundDispatcher implements Runnable {
+        private volatile NFC nfc;
+        private volatile boolean enable;
+
+        public ForegroundDispatcher(NFC nfc, boolean enable) {
+            this.nfc = nfc;
+            this.enable = enable;
+        }
+
+        public void run() {
+            if (this.enable) {
+                Log.d(NFC_DEBUG_TAG, "Enabling foreground dispatch...");
+                nfc.nfcAdapter.enableForegroundDispatch(
+                    nfc.activity, nfc.singleTopPendingIntent, nfc.tagFilters, null);
+            } else {
+                Log.d(NFC_DEBUG_TAG, "Disabling foreground dispatch...");
+                nfc.nfcAdapter.disableForegroundDispatch(nfc.activity);
+            }
+        }
+    }
+
     private static final String NFC_EXTRA_ADAPTER_STATE = "android.nfc.extra.ADAPTER_STATE";
     private static final int NFC_STATE_OFF = 1;
     private static final int NFC_STATE_TURNING_ON = 2;
@@ -43,9 +64,21 @@ public class NFC extends XWalkExtensionClient {
     private static final int NFC_STATE_TURNING_OFF = 4;
 
     private Gson gson = new Gson();
+    private XWalkExtensionContextClient xwalkContext;
     private Context androidContext;
+    private Activity activity;
     private NfcAdapter nfcAdapter;
     private boolean nfcEnabled;
+
+    private PendingIntent singleTopPendingIntent;
+    private IntentFilter tagDetected = new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED);
+    private IntentFilter ndefDetected = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
+    private IntentFilter techDetected = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
+    private IntentFilter[] tagFilters = new IntentFilter[] {
+        this.tagDetected,
+        this.ndefDetected,
+        this.techDetected
+    };
 
     // State changed
     private BroadcastReceiver nfcStateChangeBroadcastReceiver;
@@ -53,8 +86,7 @@ public class NFC extends XWalkExtensionClient {
     private Map<Integer, InternalProtocolMessage> nfcStateChangeSubscribers = new HashMap<Integer, InternalProtocolMessage>();
 
     // Ndef discovered
-    private BroadcastReceiver nfcNdefDiscoveredBroadcastReceiver;
-    private static IntentFilter nfcNdefDiscoveredIntentFilter = new IntentFilter("android.nfc.action.ACTION_NDEF_DISCOVERED");
+    private static IntentFilter nfcNdefDiscoveredIntentFilter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
 
     // Ndef subscribers
     private Map<Integer, InternalProtocolMessage> nfcTagDiscoveredSubscribers = new HashMap<Integer, InternalProtocolMessage>();
@@ -66,7 +98,9 @@ public class NFC extends XWalkExtensionClient {
                 XWalkExtensionContextClient xwalkContext) {
         super(name, jsApiContent, xwalkContext);
 
-        this.androidContext = xwalkContext.getContext();
+        this.xwalkContext = xwalkContext;
+        this.androidContext = this.xwalkContext.getContext();
+        this.activity = this.xwalkContext.getActivity();
         this.nfcAdapter = NfcAdapter.getDefaultAdapter(this.androidContext);
 
         this.nfcStateChangeBroadcastReceiver = new BroadcastReceiver() {
@@ -74,13 +108,6 @@ public class NFC extends XWalkExtensionClient {
             public void onReceive(Context context, Intent intent) {
                 int state = intent.getIntExtra(NFC_EXTRA_ADAPTER_STATE, -1);
                 detectNfcStateChanges(state);
-            }
-        };
-
-        this.nfcNdefDiscoveredBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                onTagDiscovered();
             }
         };
 
@@ -101,9 +128,9 @@ public class NFC extends XWalkExtensionClient {
     }
 
     private void startDetectingTagDiscoveries() {
-        this.androidContext.registerReceiver(
-            nfcNdefDiscoveredBroadcastReceiver,
-            this.nfcNdefDiscoveredIntentFilter);
+        Intent intent = new Intent(this.activity, this.activity.getClass());
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        this.singleTopPendingIntent = PendingIntent.getActivity(this.activity, 0, intent, 0);
     }
 
 
@@ -186,6 +213,12 @@ public class NFC extends XWalkExtensionClient {
         return gson.toJson(response);
     }
 
+    private void processIntent() {
+        Log.d(NFC_DEBUG_TAG, "Processing intent...");
+
+        Intent intent = this.activity.getIntent();
+    }
+
     private String runAction(int instanceId, String requestJson) {
         InternalProtocolMessage request = gson.fromJson(requestJson, InternalProtocolMessage.class);
 
@@ -223,6 +256,23 @@ public class NFC extends XWalkExtensionClient {
     @Override
     public String onSyncMessage(int instanceId, String message) {
         return this.runAction(instanceId, message);
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(NFC_DEBUG_TAG, "Enabling foreground dispatch...");
+        this.activity.runOnUiThread(new ForegroundDispatcher(this, true));
+    }
+
+    @Override
+    public void onPause() {
+        Log.d(NFC_DEBUG_TAG, "Disabling foreground dispatch...");
+        this.activity.runOnUiThread(new ForegroundDispatcher(this, false));
+    }
+
+    public boolean onNewIntent(Intent intent) {
+        Log.d(NFC_DEBUG_TAG, "I be damned to the Seven Hells...");
+        return false;
     }
 }
 
