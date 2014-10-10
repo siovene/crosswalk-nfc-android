@@ -1,7 +1,6 @@
-/bin
-/gen
-
-/assets/icudtl.dat
-/assets/xwalk.pak
-
 *.swp
+
+/xwalk-nfc-extension-src/build
+/xwalk-nfc-extension-src/lib
+/xwalk-nfc-extension-src/tools/apache-ivy-*
+/xwalk-nfc-extension-src/xwalk-nfc-extension

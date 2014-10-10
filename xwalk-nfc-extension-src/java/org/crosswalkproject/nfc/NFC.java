@@ -270,9 +270,8 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         this.activity.runOnUiThread(new ForegroundDispatcher(this, false));
     }
 
-    public boolean onNewIntent(Intent intent) {
+    public void onNewIntent(Intent intent) {
         Log.d(NFC_DEBUG_TAG, "I be damned to the Seven Hells...");
-        return false;
     }
 }
 

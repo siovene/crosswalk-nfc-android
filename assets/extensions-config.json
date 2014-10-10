@@ -1,7 +1,0 @@
-[{
-    "name": "nfc",
-    "class": "org.crosswalkproject.nfc.NFC",
-    "jsapi": "xwalk-extensions/nfc.js",
-    "permissions": []
-}]
-
