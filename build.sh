@@ -40,7 +40,7 @@ cd $PROJECT_DIR
 # show the location of the output apk files
 echo
 echo "********* APK FILES GENERATED:"
-APKS=`ls $XWALK_DIR/xwalk_nfc_app*.apk`
+APKS=`ls $XWALK_DIR/*.apk`
 for apk in $APKS ; do
   echo $apk
 done
