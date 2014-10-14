@@ -4,7 +4,6 @@
 
 package org.crosswalkproject.nfc;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.nfc.NfcAdapter;
 import android.os.Build.VERSION;
@@ -68,20 +67,6 @@ public class nfc_example extends XWalkRuntimeActivityBase implements NFCGlobals 
     public void setIsFullscreen(boolean isFullscreen) {
         if (isFullscreen) {
             enterFullscreen();
-        }
-    }
-
-    @Override
-    public void onNewIntent(Intent intent) {
-        // Check to see that the Activity started due to an Android Beam
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
-                Log.d(NFC_DEBUG_TAG, "Process NDEF discovered action");
-        } else if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
-                Log.d(NFC_DEBUG_TAG, "Process TAG discovered action");
-        } else  if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(intent.getAction())) {
-                Log.d(NFC_DEBUG_TAG, "Process TECH discovered action");
-        } else {
-                Log.d(NFC_DEBUG_TAG, "Ignore action " + intent.getAction());
         }
     }
 }
