@@ -19,6 +19,7 @@
   <property name="dist" value="xwalk-nfc-extension" />
 
   <property environment="env" />
+  <fail unless="env.ANDROID_HOME" message="$ANDROID_HOME is not set." />
 
   <!-- classpath containing the Ivy Ant tasks jar file -->
   <path id="ivy.lib.path">
