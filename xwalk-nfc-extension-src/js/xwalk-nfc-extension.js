@@ -66,70 +66,67 @@ function NFCManager() {
             return false;
         }
     });
+
+    // =============================================================================
+    // Functions
+    // =============================================================================
+
+    this.powerOn = function() {
+        _next_response_id += 1;
+        var message = _messageToJson(_next_response_id, "nfc_set_power_on");
+        console.log("powerOn called on manager");
+
+        return new Promise(function(resolve, reject) {
+            _callbacks[_next_response_id] = resolve;
+
+            try {
+                extension.internal.sendSyncMessage(message);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    };
+
+
+    this.powerOff = function() {
+        _next_response_id += 1;
+        var message = _messageToJson(_next_response_id, "nfc_set_power_off");
+
+        return new Promise(function(resolve, reject) {
+            _callbacks[_next_response_id] = resolve;
+
+            try {
+                extension.internal.sendSyncMessage(message);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    };
+
+
+    this.startPoll = function() {
+        _next_response_id += 1;
+        var message = _messageToJson(_next_response_id, "nfc_subscribe_tag_discovered");
+
+        return new Promise(function(resolve, reject) {
+            _callbacks[_next_response_id] = function(response) {
+                if (_subscribed_tag_discovered) {
+                    this.prototype.ontagfound(response.content);
+                }
+
+                resolve();
+            };
+
+            try {
+                extension.internal.sendSyncMessage(message);
+                _subscribed_tag_discovered = true;
+            } catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        });
+    };
 };
-
-
-// =============================================================================
-// Functions
-// =============================================================================
-
-NFCManager.powerOn = function() {
-    _next_response_id += 1;
-    var message = _messageToJson(_next_response_id, "nfc_set_power_on");
-
-    return new Promise(function(resolve, reject) {
-        _callbacks[_next_response_id] = resolve;
-
-        try {
-            extension.internal.sendSyncMessage(message);
-        } catch (e) {
-            reject(e);
-        }
-    });
-};
-
-
-NFCManager.powerOff = function() {
-    _next_response_id += 1;
-    var message = _messageToJson(_next_response_id, "nfc_set_power_off");
-
-    return new Promise(function(resolve, reject) {
-        _callbacks[_next_response_id] = resolve;
-
-        try {
-            extension.internal.sendSyncMessage(message);
-        } catch (e) {
-            reject(e);
-        }
-    });
-};
-
-
-NFCManager.startPoll = function() {
-    _next_response_id += 1;
-    var message = _messageToJson(_next_response_id, "nfc_subscribe_tag_discovered");
-
-    return new Promise(function(resolve, reject) {
-        _callbacks[_next_response_id] = function(response) {
-            if (!_subscribed_tag_discovered)
-                this.prototype.ontagfound();
-            resolve();
-        };
-
-        try {
-            extension.internal.sendSyncMessage(message);
-            _subscribed_tag_discovered = true;
-        } catch (e) {
-            reject(e);
-        }
-    });
-};
-
-
-// =============================================================================
-// Initialization
-// =============================================================================
-
 
 
 // =============================================================================

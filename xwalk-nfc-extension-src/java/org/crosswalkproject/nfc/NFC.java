@@ -13,10 +13,16 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentFilter.MalformedMimeTypeException;
 import android.nfc.NfcAdapter;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
+import android.nfc.Tag;
+import android.nfc.tech.Ndef;
 import android.provider.Settings;
 import android.util.Log;
 
 // Java
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -161,16 +167,13 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         }
     }
 
-    private void onTagDiscovered() {
-        Log.d(NFC_DEBUG_TAG, "Tag discovered");
-
+    private void onTagDiscovered(String content) {
         for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcTagDiscoveredSubscribers.entrySet()) {
             Integer instanceId = entry.getKey();
             InternalProtocolMessage request = entry.getValue();
 
-            InternalProtocolMessage response = new InternalProtocolMessage(request.id, "ok", true);
+            InternalProtocolMessage response = new InternalProtocolMessage(request.id, content, true);
             postMessage(instanceId, gson.toJson(response));
-            Log.d(NFC_DEBUG_TAG, gson.toJson(response));
         }
     }
 
@@ -208,15 +211,10 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     }
 
     private String subscribeTagDiscovered(int instanceId, InternalProtocolMessage request) {
+        Log.d(NFC_DEBUG_TAG, "Subscribing instance to Tag discovery: " + instanceId);
         this.nfcTagDiscoveredSubscribers.put((Integer) instanceId, request);
         InternalProtocolMessage response = new InternalProtocolMessage(request.id, "ok", false);
         return gson.toJson(response);
-    }
-
-    private void processIntent() {
-        Log.d(NFC_DEBUG_TAG, "Processing intent...");
-
-        Intent intent = this.activity.getIntent();
     }
 
     private String runAction(int instanceId, String requestJson) {
@@ -272,14 +270,30 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
     public void onNewIntent(Intent intent) {
         // Check to see that the Activity started due to an Android Beam
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
-                Log.d(NFC_DEBUG_TAG, "Process NDEF discovered action");
-        } else if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
-                Log.d(NFC_DEBUG_TAG, "Process TAG discovered action");
-        } else  if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(intent.getAction())) {
-                Log.d(NFC_DEBUG_TAG, "Process TECH discovered action");
-        } else {
-                Log.d(NFC_DEBUG_TAG, "Ignore action " + intent.getAction());
+        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction()) ||
+            NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+
+            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+            Ndef ndef = Ndef.get(tag);
+            if (ndef == null) {
+                Log.d(NFC_DEBUG_TAG, "NDEF is not supported by this Tag");
+                return;
+            }
+
+            NdefMessage ndefMessage = ndef.getCachedNdefMessage();
+            NdefRecord[] records = ndefMessage.getRecords();
+            for (NdefRecord ndefRecord : records) {
+                try {
+                    byte[] payload = ndefRecord.getPayload();
+                    String textEncoding = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16";
+                    int languageCodeLength = payload[0] & 0063;
+                    String content = new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, textEncoding);
+
+                    onTagDiscovered(content);
+                } catch (UnsupportedEncodingException e) {
+                    Log.e(NFC_DEBUG_TAG, "Unsupported Encoding", e);
+                }
+            }
         }
     }
 }
