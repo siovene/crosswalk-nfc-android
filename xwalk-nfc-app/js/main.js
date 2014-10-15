@@ -12,7 +12,9 @@ nfc.NFCManager.prototype.onpoweroff = function() {
 nfc.NFCManager.prototype.ontagfound = function(e) {
     var tag = e.tag;
     tag.readNDEF().then(function(record) {
-        alert(record.type);
+        record.getPayload().then(function(payload) {
+            alert("Tag content: " + String.fromCharCode.apply(null, payload));
+        });
     });
 }
 

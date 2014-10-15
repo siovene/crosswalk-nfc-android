@@ -27,15 +27,28 @@ var TNF = {
 };
 
 
-function NDEFRecord(tnf, type, id) {
+function NDEFRecord(tnf, type, id, _uuid) {
     this.tnf = tnf;
     this.type = type;
     this.id = id;
+    this._uuid = _uuid;
 
     this.getPayload = function() {
         _next_response_id += 1;
-        var message = _messageToJson(_next_response_id, "nfc_ndefrecord_getpayload");
-        // TODO
+        var message = _messageToJson(_next_response_id, "nfc_ndefrecord_get_payload", this._uuid);
+
+        return new Promise(function(resolve, reject) {
+            try {
+                var response = extension.internal.sendSyncMessage(message);
+                var responseJson = JSON.parse(response);
+                var payload = JSON.parse(responseJson.args);
+
+                resolve(payload);
+            } catch (e) {
+                console.err(e);
+                reject(e);
+            }
+        });
     };
 };
 
@@ -54,8 +67,9 @@ function NDEFMessageEvent() {
 };
 
 
-function NFCTag(uuid) {
-    this._uuid = uuid;
+function NFCTag(_uuid) {
+    var tag = this;
+    this._uuid = _uuid;
 
     this.readNDEF = function() {
         _next_response_id += 1;
@@ -69,7 +83,8 @@ function NFCTag(uuid) {
                 var record = new NDEFRecord(
                     argsJson.tnf,
                     argsJson.type,
-                    argsJson.id);
+                    argsJson.id,
+                    tag._uuid);
 
                 resolve(record);
             } catch (e) {

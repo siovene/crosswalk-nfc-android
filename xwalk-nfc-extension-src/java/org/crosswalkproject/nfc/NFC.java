@@ -101,7 +101,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
     // Data with UUID
     private Map<String, Tag> nfcTagMap = new HashMap<String, Tag>();
-    private Map<String, NdefRecord> nfcRecordMap = new HashMap<String, NdefRecord>();
+    private Map<String, NdefRecord> ndefRecordMap = new HashMap<String, NdefRecord>();
 
 
     // the constructor should have this signature so that Crosswalk
@@ -238,18 +238,28 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         // W3C spec mentions only one record. Let's return the first one and
         // we'll see later about updating this.
-        nfcRecordMap.put(uuid, records[0]);
+        ndefRecordMap.put(uuid, records[0]);
 
         JsonObject jsonRecord = new JsonObject();
         jsonRecord.addProperty("tnf", records[0].getTnf());
         jsonRecord.addProperty("type", new String(records[0].getType()));
         jsonRecord.addProperty("id", new String(records[0].getId()));
+        jsonRecord.addProperty("uuid", uuid);
 
         InternalProtocolMessage response = new InternalProtocolMessage(
             request.id, "nfc_status_ok", gson.toJson(jsonRecord), false);
         return gson.toJson(response);
     }
 
+    private String ndefRecordGetPayload(int instanceId, InternalProtocolMessage request) {
+        String uuid = request.args;
+        NdefRecord record = ndefRecordMap.get(uuid);
+        byte[] payload = record.getPayload();
+
+        InternalProtocolMessage response = new InternalProtocolMessage(
+            request.id, "nfc_status_ok", gson.toJson(payload), false);
+        return gson.toJson(response);
+    }
 
     private String runAction(int instanceId, String requestJson) {
         InternalProtocolMessage request = gson.fromJson(requestJson, InternalProtocolMessage.class);
@@ -278,6 +288,10 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         else if(request.content.equals("nfc_tag_read_ndef")) {
             response = this.tagReadNDEF(instanceId, request);
         }
+        else if(request.content.equals("nfc_ndefrecord_get_payload")) {
+            response = this.ndefRecordGetPayload(instanceId, request);
+        }
+
 
         if (response == null) {
             response = gson.toJson(new InternalProtocolMessage(
