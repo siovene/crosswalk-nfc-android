@@ -153,7 +153,6 @@ function NFCManager() {
     this.powerOn = function() {
         _next_response_id += 1;
         var message = _messageToJson(_next_response_id, "nfc_set_power_on");
-        console.log("powerOn called on manager");
 
         return new Promise(function(resolve, reject) {
             _callbacks[_next_response_id] = resolve;

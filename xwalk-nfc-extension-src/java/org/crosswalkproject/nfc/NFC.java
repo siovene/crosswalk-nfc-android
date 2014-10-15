@@ -57,11 +57,9 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         public void run() {
             if (this.enable) {
-                Log.d(NFC_DEBUG_TAG, "Enabling foreground dispatch...");
                 nfc.nfcAdapter.enableForegroundDispatch(
                     nfc.activity, nfc.singleTopPendingIntent, nfc.tagFilters, null);
             } else {
-                Log.d(NFC_DEBUG_TAG, "Disabling foreground dispatch...");
                 nfc.nfcAdapter.disableForegroundDispatch(nfc.activity);
             }
         }
@@ -150,18 +148,13 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
     private void detectInitialNfcState() {
         this.nfcEnabled = this.nfcAdapter.isEnabled();
-        Log.d(NFC_DEBUG_TAG, "Initial NFC state: " + (this.nfcEnabled ? "enabled" : "disabled"));
     }
 
     private void detectNfcStateChanges(int state) {
-        Log.d(NFC_DEBUG_TAG, "Detect NFC state changes while previously " + (this.nfcEnabled ? "enabled" : "disabled"));
         boolean enabled = (state == NFC_STATE_ON) || (state == NFC_STATE_TURNING_ON);
 
-        Log.d(NFC_DEBUG_TAG, "this.nfcEnabled = " + this.nfcEnabled + ", enabled = " + enabled);
         if(this.nfcEnabled != enabled) {
-            Log.d(NFC_DEBUG_TAG, "NFC state change detected; NFC is now " + (enabled ? "enabled" : "disabled"));
             this.nfcEnabled = enabled;
-            Log.d(NFC_DEBUG_TAG, "New value of this.nfcEnabled = " + this.nfcEnabled);
             String nfc_state = enabled ? "nfc_state_on" : "nfc_state_off";
 
             for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcStateChangeSubscribers.entrySet()) {
@@ -170,7 +163,6 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
                 InternalProtocolMessage response = new InternalProtocolMessage(request.id, nfc_state, null, false);
                 postMessage(instanceId, gson.toJson(response));
-                Log.d(NFC_DEBUG_TAG, gson.toJson(response));
             }
         }
     }
@@ -307,13 +299,11 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
     @Override
     public void onResume() {
-        Log.d(NFC_DEBUG_TAG, "Enabling foreground dispatch...");
         this.activity.runOnUiThread(new ForegroundDispatcher(this, true));
     }
 
     @Override
     public void onPause() {
-        Log.d(NFC_DEBUG_TAG, "Disabling foreground dispatch...");
         this.activity.runOnUiThread(new ForegroundDispatcher(this, false));
     }
 
