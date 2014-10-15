@@ -9,8 +9,11 @@ nfc.NFCManager.prototype.onpoweroff = function() {
     document.getElementById("power-status").textContent = "OFF";
 }
 
-nfc.NFCManager.prototype.ontagfound = function(content) {
-    alert("Tag content: " + content);
+nfc.NFCManager.prototype.ontagfound = function(e) {
+    var tag = e.tag;
+    tag.readNDEF().then(function(record) {
+        alert(record.type);
+    });
 }
 
 if (manager.powered) {

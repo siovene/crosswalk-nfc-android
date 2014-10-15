@@ -1,21 +1,98 @@
+var _callbacks = {}
+var _next_response_id = 0;
+var _messageToJson = function(id, content, args) {
+    var obj = {
+        id: '' + id,
+        content: content,
+        args: args
+    };
+
+    return JSON.stringify(obj);
+};
+
+
 // =============================================================================
-// Object definition
+// Object definitions
 // =============================================================================
+
+var TNF = {
+    "Empty"      : 0,
+    "Well-known" : 1,
+    "Media-type" : 2,
+    "AbsoluteURI": 3,
+    "External"   : 4,
+    "Unknown"    : 5,
+    "Unchanged"  : 6,
+    "Reserved"   : 7
+};
+
+
+function NDEFRecord(tnf, type, id) {
+    this.tnf = tnf;
+    this.type = type;
+    this.id = id;
+
+    this.getPayload = function() {
+        _next_response_id += 1;
+        var message = _messageToJson(_next_response_id, "nfc_ndefrecord_getpayload");
+        // TODO
+    };
+};
+
+
+function NDEFMessage() {
+    this.records = [];
+
+    this.getBytes = function() {
+        // TODO
+    };
+};
+
+
+function NDEFMessageEvent() {
+    this.message = null;
+};
+
+
+function NFCTag(uuid) {
+    this._uuid = uuid;
+
+    this.readNDEF = function() {
+        _next_response_id += 1;
+        var message = _messageToJson(_next_response_id, "nfc_tag_read_ndef", this._uuid);
+
+        return new Promise(function(resolve, reject) {
+            try {
+                var response = extension.internal.sendSyncMessage(message);
+                var responseJson = JSON.parse(response);
+                var argsJson = JSON.parse(responseJson.args);
+                var record = new NDEFRecord(
+                    argsJson.tnf,
+                    argsJson.type,
+                    argsJson.id);
+
+                resolve(record);
+            } catch (e) {
+                console.err(e);
+                reject(e);
+            }
+        });
+    };
+
+    this.writeNDEF = function(message) {
+        // TODO
+    };
+};
+
+
+function NFCTagEvent(tag) {
+    this.tag = tag;
+};
+
 
 function NFCManager() {
-    var _callbacks = {}
-    var _next_response_id = 0;
     var _subscribed_power_state_changed = false;
     var _subscribed_tag_discovered = false;
-
-    var _messageToJson = function(id, content) {
-        var obj = {
-            id: '' + id,
-            content: content
-        };
-
-        return JSON.stringify(obj);
-    };
 
     var _subscribe_power_state_changed = function() {
         if (_subscribed_power_state_changed)
@@ -40,11 +117,13 @@ function NFCManager() {
         var data = JSON.parse(message);
         var cb = _callbacks[data.id];
 
-        if (cb) {
+        if (cb !== undefined) {
             cb.call(NFCManager, data);
 
             if (!data.persistent)
                 delete _callbacks[data.id];
+        } else {
+            console.err("Callback not found");
         }
     });
 
@@ -111,15 +190,16 @@ function NFCManager() {
         return new Promise(function(resolve, reject) {
             _callbacks[_next_response_id] = function(response) {
                 if (_subscribed_tag_discovered) {
-                    this.prototype.ontagfound(response.content);
+                    var tag = new NFCTag(response.args);
+                    var evt = new NFCTagEvent(tag);
+                    this.prototype.ontagfound(evt);
                 }
-
-                resolve();
             };
 
             try {
                 extension.internal.sendSyncMessage(message);
                 _subscribed_tag_discovered = true;
+                resolve();
             } catch (e) {
                 console.error(e);
                 reject(e);
@@ -133,4 +213,10 @@ function NFCManager() {
 // Scope assignment
 // =============================================================================
 
+exports.TNF = TNF;
+exports.NDEFRecord = NDEFRecord;
+exports.NDEFMessage = NDEFMessage;
+exports.NDEFMessageEvent = NDEFMessageEvent;
+exports.NFCTag = NFCTag;
+exports.NFCTagEvent = NFCTagEvent;
 exports.NFCManager = NFCManager;
