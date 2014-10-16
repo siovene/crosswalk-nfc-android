@@ -67,7 +67,7 @@ function NDEFRecord(tnf, type, id, _uuid) {
 
                 resolve(payload);
             } catch (e) {
-                console.err(e);
+                console.error(e);
                 reject(e);
             }
         });
@@ -156,7 +156,7 @@ function NFCTag(_uuid) {
 
                 resolve(record);
             } catch (e) {
-                console.err(e);
+                console.error(e);
                 reject(e);
             }
         });
@@ -225,7 +225,7 @@ function NFCManager() {
                 delete _callbacks[data.id];
             }
         } else {
-            console.err("Callback not found");
+            console.error("Callback not found");
         }
     });
 
