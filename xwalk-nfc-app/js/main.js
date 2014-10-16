@@ -1,15 +1,19 @@
-// Event handlers
+'use strict';
+
+/*global nfc */
 var manager = new nfc.NFCManager();
 
-nfc.NFCManager.prototype.onpoweron = function() {
+// Event handlers
+nfc.NFCManager.prototype.onpoweron = function () {
+    /*global document */
     document.getElementById("power-status").textContent = "ON";
-}
+};
 
-nfc.NFCManager.prototype.onpoweroff = function() {
+nfc.NFCManager.prototype.onpoweroff = function () {
     document.getElementById("power-status").textContent = "OFF";
-}
+};
 
-nfc.NFCManager.prototype.ontagfound = function(e) {
+nfc.NFCManager.prototype.ontagfound = function (e) {
     var tag = e.tag;
     tag.readNDEF().then(function (record) {
         record.getPayload().then(function (payload) {
@@ -36,7 +40,7 @@ nfc.NFCManager.prototype.ontagfound = function(e) {
             }
         });
     });
-}
+};
 
 if (manager.powered) {
     manager.onpoweron();
@@ -44,6 +48,6 @@ if (manager.powered) {
     manager.onpoweroff();
 }
 
-manager.startPoll().catch(function(e) {
+manager.startPoll().catch(function (e) {
     console.error(e);
 });

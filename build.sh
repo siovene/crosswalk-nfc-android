@@ -25,6 +25,13 @@ echo
 cd $EXTENSION_SRC
 ant
 
+# lint the js
+if [ -f $PROJECT_DIR/node_modules/.bin/jslint ]; then
+    echo "********* LINTING THE JS FILES..."
+    $PROJECT_DIR/node_modules/.bin/jslint xwalk-nfc-app/js/main.js
+    $PROJECT_DIR/node_modules/.bin/jslint xwalk-nfc-extension-src/js/xwalk-nfc-extension.js
+fi
+
 # location of Crosswalk Android (downloaded during extension build)
 XWALK_DIR=$EXTENSION_SRC/lib/`ls lib/ | grep 'crosswalk-'`
 

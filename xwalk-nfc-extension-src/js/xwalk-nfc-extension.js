@@ -1,8 +1,12 @@
-var _callbacks = {}
+/*jslint todo: true, nomen: true */
+
+'use strict';
+
+var _callbacks = {};
 var _next_response_id = 0;
-var _messageToJson = function(id, content, args) {
+var _messageToJson = function (id, content, args) {
     var obj = {
-        id: '' + id,
+        id: id.toString(),
         content: content,
         args: args
     };
@@ -33,15 +37,17 @@ function NDEFRecord(tnf, type, id, _uuid) {
     this.id = id;
     this._uuid = _uuid;
 
-    this.getPayload = function() {
+    this.getPayload = function () {
         _next_response_id += 1;
         var message = _messageToJson(_next_response_id, "nfc_ndefrecord_get_payload", this._uuid);
 
-        return new Promise(function(resolve, reject) {
+        /*global Promise */
+        return new Promise(function (resolve, reject) {
             try {
-                var response = extension.internal.sendSyncMessage(message);
-                var responseJson = JSON.parse(response);
-                var payload = JSON.parse(responseJson.args);
+                /*global extension */
+                var response = extension.internal.sendSyncMessage(message),
+                    responseJson = JSON.parse(response),
+                    payload = JSON.parse(responseJson.args);
 
                 resolve(payload);
             } catch (e) {
@@ -82,26 +88,27 @@ function NDEFRecordURI(tnf, type, id, uri, _uuid) {
 function NDEFMessage() {
     this.records = [];
 
-    this.getBytes = function() {
+    this.getBytes = function () {
         // TODO
+        return;
     };
-};
+}
 
 
 function NDEFMessageEvent() {
     this.message = null;
-};
+}
 
 
 function NFCTag(_uuid) {
     var tag = this;
     this._uuid = _uuid;
 
-    this.readNDEF = function() {
+    this.readNDEF = function () {
         _next_response_id += 1;
         var message = _messageToJson(_next_response_id, "nfc_tag_read_ndef", this._uuid);
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             try {
                 var response = extension.internal.sendSyncMessage(message),
                     responseJson = JSON.parse(response),
@@ -144,49 +151,55 @@ function NFCTag(_uuid) {
         });
     };
 
-    this.writeNDEF = function(message) {
+    this.writeNDEF = function (message) {
         // TODO
+        console.log(message);
+        return;
     };
-};
+}
 
 
 function NFCTagEvent(tag) {
     this.tag = tag;
-};
+}
 
 
 function NFCManager() {
-    var _subscribed_power_state_changed = false;
-    var _subscribed_tag_discovered = false;
+    var _subscribed_power_state_changed = false,
+        _subscribed_tag_discovered = false,
 
-    var _subscribe_power_state_changed = function() {
-        if (_subscribed_power_state_changed)
-            return;
+        _subscribe_power_state_changed = function () {
+            if (_subscribed_power_state_changed) {
+                return;
+            }
 
-        _next_response_id += 1;
-        _callbacks[_next_response_id] = function(response) {
-            if(response.content == "nfc_state_on" && this.prototype.onpoweron !== undefined)
-                this.prototype.onpoweron();
-            else if (response.content == "nfc_state_off" && this.prototype.onpoweroff !== undefined)
-                this.prototype.onpoweroff();
+            _next_response_id += 1;
+            _callbacks[_next_response_id] = function (response) {
+                if (response.content === "nfc_state_on" && this.prototype.onpoweron !== undefined) {
+                    this.prototype.onpoweron();
+                } else if (response.content === "nfc_state_off" && this.prototype.onpoweroff !== undefined) {
+                    this.prototype.onpoweroff();
+                }
+            };
+            extension.internal.sendSyncMessage(
+                _messageToJson(_next_response_id, "nfc_subscribe_power_state_changed")
+            );
+
+            _subscribed_power_state_changed = true;
         };
-        extension.internal.sendSyncMessage(_messageToJson(
-            _next_response_id, "nfc_subscribe_power_state_changed"));
-
-        _subscribed_power_state_changed = true;
-    };
 
     // message listener for ALL messages; this invokes the correct
     // callback depending on the ID in the message
     extension.setMessageListener(function (message) {
-        var data = JSON.parse(message);
-        var cb = _callbacks[data.id];
+        var data = JSON.parse(message),
+            cb = _callbacks[data.id];
 
         if (cb !== undefined) {
             cb.call(NFCManager, data);
 
-            if (!data.persistent)
+            if (!data.persistent) {
                 delete _callbacks[data.id];
+            }
         } else {
             console.err("Callback not found");
         }
@@ -197,15 +210,16 @@ function NFCManager() {
     // =========================================================================
 
     Object.defineProperty(this, "powered", {
-        get: function() {
-            var message = JSON.stringify({"content": "nfc_get_power_state"});
-            var result = extension.internal.sendSyncMessage(message);
-            var resultJson = JSON.parse(result);
+        get: function () {
+            var message = JSON.stringify({"content": "nfc_get_power_state"}),
+                result = extension.internal.sendSyncMessage(message),
+                resultJson = JSON.parse(result);
 
             _subscribe_power_state_changed();
 
-            if (resultJson.content == 'on')
+            if (resultJson.content === 'on') {
                 return true;
+            }
 
             return false;
         }
@@ -215,11 +229,11 @@ function NFCManager() {
     // Functions
     // =============================================================================
 
-    this.powerOn = function() {
+    this.powerOn = function () {
         _next_response_id += 1;
         var message = _messageToJson(_next_response_id, "nfc_set_power_on");
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             _callbacks[_next_response_id] = resolve;
 
             try {
@@ -231,11 +245,11 @@ function NFCManager() {
     };
 
 
-    this.powerOff = function() {
+    this.powerOff = function () {
         _next_response_id += 1;
         var message = _messageToJson(_next_response_id, "nfc_set_power_off");
 
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             _callbacks[_next_response_id] = resolve;
 
             try {
@@ -247,15 +261,16 @@ function NFCManager() {
     };
 
 
-    this.startPoll = function() {
+    this.startPoll = function () {
         _next_response_id += 1;
         var message = _messageToJson(_next_response_id, "nfc_subscribe_tag_discovered");
 
-        return new Promise(function(resolve, reject) {
-            _callbacks[_next_response_id] = function(response) {
+        return new Promise(function (resolve, reject) {
+            _callbacks[_next_response_id] = function (response) {
                 if (_subscribed_tag_discovered) {
-                    var tag = new NFCTag(response.args);
-                    var evt = new NFCTagEvent(tag);
+                    var tag = new NFCTag(response.args),
+                        evt = new NFCTagEvent(tag);
+
                     this.prototype.ontagfound(evt);
                 }
             };
@@ -270,7 +285,7 @@ function NFCManager() {
             }
         });
     };
-};
+}
 
 
 // =============================================================================
