@@ -238,12 +238,28 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         // W3C spec mentions only one record. Let's return the first one and
         // we'll see later about updating this.
-        ndefRecordMap.put(uuid, records[0]);
+        NdefRecord record = records[0];
+        ndefRecordMap.put(uuid, record);
 
         JsonObject jsonRecord = new JsonObject();
-        jsonRecord.addProperty("tnf", records[0].getTnf());
-        jsonRecord.addProperty("type", new String(records[0].getType()));
-        jsonRecord.addProperty("id", new String(records[0].getId()));
+        jsonRecord.addProperty("tnf", record.getTnf());
+        jsonRecord.addProperty("type", new String(record.getType()));
+        jsonRecord.addProperty("id", new String(record.getId()));
+
+        switch (record.getTnf()) {
+            case NdefRecord.TNF_EMPTY:
+            break;
+
+            case NdefRecord.TNF_WELL_KNOWN:
+            String type = new String(record.getType());
+            if (type.equals("T")) {
+                // TODO
+            } else if (type.equals("U")) {
+                jsonRecord.addProperty("uri", new String(record.getPayload()));
+            }
+            break;
+        };
+
         jsonRecord.addProperty("uuid", uuid);
 
         InternalProtocolMessage response = new InternalProtocolMessage(

@@ -16,14 +16,14 @@ var _messageToJson = function(id, content, args) {
 // =============================================================================
 
 var TNF = {
-    "Empty"      : 0,
-    "Well-known" : 1,
-    "Media-type" : 2,
-    "AbsoluteURI": 3,
-    "External"   : 4,
-    "Unknown"    : 5,
-    "Unchanged"  : 6,
-    "Reserved"   : 7
+    0: "Empty",
+    1: "Well-known",
+    2: "Media-type",
+    3: "AbsoluteURI",
+    4: "External",
+    5: "Unknown",
+    6: "Unchanged",
+    7: "Reserved"
 };
 
 
@@ -50,7 +50,33 @@ function NDEFRecord(tnf, type, id, _uuid) {
             }
         });
     };
-};
+}
+
+
+function NDEFRecordEmpty(id, _uuid) {
+    NDEFRecord.call(this, null, 0, id, _uuid);
+
+    this.getPayload = function () {
+        return new Promise(function (resolve) {
+            resolve(null);
+        });
+    };
+}
+
+function NDEFRecordText(tnf, type, id, text, languageCode, encoding, _uuid) {
+    NDEFRecord.call(this, tnf, type, id, _uuid);
+
+    this.text = text;
+    this.languageCode = languageCode;
+    this.encoding = encoding;
+}
+
+
+function NDEFRecordURI(tnf, type, id, uri, _uuid) {
+    NDEFRecord.call(this, tnf, type, id, _uuid);
+
+    this.uri = uri;
+}
 
 
 function NDEFMessage() {
@@ -77,14 +103,38 @@ function NFCTag(_uuid) {
 
         return new Promise(function(resolve, reject) {
             try {
-                var response = extension.internal.sendSyncMessage(message);
-                var responseJson = JSON.parse(response);
-                var argsJson = JSON.parse(responseJson.args);
-                var record = new NDEFRecord(
-                    argsJson.tnf,
-                    argsJson.type,
-                    argsJson.id,
-                    tag._uuid);
+                var response = extension.internal.sendSyncMessage(message),
+                    responseJson = JSON.parse(response),
+                    argsJson = JSON.parse(responseJson.args),
+                    record;
+
+                switch (argsJson.tnf) {
+                case 0:
+                    record = new NDEFRecordEmpty(argsJson.id, tag._uuid);
+                    break;
+
+                case 1:
+                    if (argsJson.type === 'T') {
+                        record = new NDEFRecordText(
+                            argsJson.tnf,
+                            argsJson.type,
+                            argsJson.id,
+                            argsJson.text,
+                            argsJson.languageCode,
+                            argsJson.encoding,
+                            tag._uuid
+                        );
+                    } else if (argsJson.type === 'U') {
+                        record = new NDEFRecordURI(
+                            argsJson.tnf,
+                            argsJson.type,
+                            argsJson.id,
+                            argsJson.uri,
+                            tag._uuid
+                        );
+                    }
+                    break;
+                }
 
                 resolve(record);
             } catch (e) {
