@@ -59,6 +59,22 @@ manager.startPoll().catch(function (e) {
 });
 
 
+function reset() {
+    document.getElementById('tag').className = 'hide';
+
+    document.getElementById("tnf").textContent = '...';
+    document.getElementById("type").textContent = '...';
+    document.getElementById("payload").textContent = '...';
+
+    document.getElementById('type-text').className = 'hide';
+    document.getElementById('text').textContent = '...';
+    document.getElementById('language-code').textContent = '...';
+    document.getElementById('encoding').textContent = '...';
+
+    document.getElementById('type-uri').className = 'hide';
+    document.getElementById('uri').textContent = '...';
+}
+
 function writeFormSubmit() {
     var type = document.getElementsByName('write-form-type')[0].value,
         content = document.getElementsByName('write-form-content')[0].value,
@@ -67,7 +83,9 @@ function writeFormSubmit() {
     if (type === "Text") {
         record = new nfc.NDEFRecordText(content, "en-US", "UTF-8");
         message = new nfc.NDEFMessage([record], currentTag._uuid);
-        currentTag.writeNDEF(message);
+        currentTag.writeNDEF(message).then(function() {
+            reset();
+        });
     }
 
     return false;
