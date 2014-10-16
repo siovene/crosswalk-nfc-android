@@ -22,14 +22,15 @@ import android.util.Log;
 
 // Java
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 // Other
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 
 public class NFC extends XWalkExtensionClient implements NFCGlobals {
     private class InternalProtocolMessage {
@@ -247,14 +248,14 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         jsonRecord.addProperty("id", new String(record.getId()));
 
         switch (record.getTnf()) {
-            case NdefRecord.TNF_EMPTY:
+        case NdefRecord.TNF_EMPTY:
             break;
 
-            case NdefRecord.TNF_WELL_KNOWN:
+        case NdefRecord.TNF_WELL_KNOWN:
             String type = new String(record.getType());
-            if (type.equals("T")) {
-                // TODO
-            } else if (type.equals("U")) {
+            if (type.toLowerCase().equals("t")) {
+                jsonRecord.addProperty("text", new String(record.getPayload()));
+            } else if (type.toLowerCase().equals("u")) {
                 jsonRecord.addProperty("uri", new String(record.getPayload()));
             }
             break;
@@ -264,6 +265,91 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         InternalProtocolMessage response = new InternalProtocolMessage(
             request.id, "nfc_status_ok", gson.toJson(jsonRecord), false);
+        return gson.toJson(response);
+    }
+
+    private NdefRecord createTextRecord(String text) throws UnsupportedEncodingException {
+        String lang       = "en";
+        byte[] textBytes  = text.getBytes();
+        byte[] langBytes  = lang.getBytes("US-ASCII");
+        int    langLength = langBytes.length;
+        int    textLength = textBytes.length;
+        byte[] payload    = new byte[1 + langLength + textLength];
+
+        // set status byte (see NDEF spec for actual bits)
+        payload[0] = (byte) langLength;
+
+        // copy langbytes and textbytes into payload
+        System.arraycopy(langBytes, 0, payload, 1,              langLength);
+        System.arraycopy(textBytes, 0, payload, 1 + langLength, textLength);
+
+        NdefRecord record = new NdefRecord(NdefRecord.TNF_WELL_KNOWN,
+                                           NdefRecord.RTD_TEXT,
+                                           new byte[0],
+                                           payload);
+
+        return record;
+    }
+
+    private String tagWriteNDEF(int instanceId, InternalProtocolMessage request) {
+        JsonParser parser = new JsonParser();
+        JsonElement data = parser.parse(request.args);
+        JsonArray jsonRecords = data.getAsJsonObject().getAsJsonArray("records");
+        NdefRecord[] records = new NdefRecord[jsonRecords.size()];
+
+        Log.d(NFC_DEBUG_TAG, "Records = " + jsonRecords.size());
+
+        for (int i = 0; i < jsonRecords.size(); i++) {
+            Log.d(NFC_DEBUG_TAG, "Processing record " + i);
+            JsonObject jsonRecord = jsonRecords.get(i).getAsJsonObject();
+            int tnf = jsonRecord.get("tnf").getAsInt();
+            String type = jsonRecord.get("type").getAsString();
+            NdefRecord record = null;
+
+            Log.d(NFC_DEBUG_TAG, "TNF: " + tnf);
+            switch (tnf) {
+            case NdefRecord.TNF_EMPTY:
+                // Skip it
+                break;
+            case NdefRecord.TNF_WELL_KNOWN:
+                Log.d(NFC_DEBUG_TAG, "Type: " + type);
+                if (type.toLowerCase().equals("t")) {
+                    try {
+                        record = createTextRecord(jsonRecord.get("text").getAsString());
+                    } catch (UnsupportedEncodingException e) {
+                        InternalProtocolMessage response = new InternalProtocolMessage(
+                            request.id, "nfc_status_fail", "Unsupported encoding", false);
+                        return gson.toJson(response);
+                    }
+                }
+                break;
+            default:
+                InternalProtocolMessage response = new InternalProtocolMessage(
+                    request.id, "nfc_status_fail", "Invalid type", false);
+                return gson.toJson(response);
+            }
+
+            records[i] = record;
+            Log.d(NFC_DEBUG_TAG, record.toString());
+        }
+
+
+        NdefMessage message = new NdefMessage(records);
+        Tag tag = nfcTagMap.get(data.getAsJsonObject().get("_uuid").getAsString());
+        Ndef ndef = Ndef.get(tag);
+
+        try {
+            ndef.connect();
+            ndef.writeNdefMessage(message);
+            ndef.close();
+        } catch (Exception e) {
+            InternalProtocolMessage response = new InternalProtocolMessage(
+                request.id, "nfc_status_fail", "I/O error", false);
+            return gson.toJson(response);
+        }
+
+        InternalProtocolMessage response = new InternalProtocolMessage(
+            request.id, "nfc_status_ok", null, false);
         return gson.toJson(response);
     }
 
@@ -304,6 +390,11 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         else if(request.content.equals("nfc_tag_read_ndef")) {
             response = this.tagReadNDEF(instanceId, request);
         }
+
+        else if(request.content.equals("nfc_tag_write_ndef")) {
+            response = this.tagWriteNDEF(instanceId, request);
+        }
+
         else if(request.content.equals("nfc_ndefrecord_get_payload")) {
             response = this.ndefRecordGetPayload(instanceId, request);
         }

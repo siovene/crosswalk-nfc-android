@@ -26,23 +26,34 @@
             <span id="power-status" class="value">...</span>
         </p>
 
-        <h2>Tag content</h2>
-        <p>
-            TNF:     <span id="tnf" class="value">...</span> <br/>
-            Type:    <span id="type" class="value">...</span> <br/>
-            Payload: <span id="payload" class="value">...</span> <br/>
-        </p>
+        <div id="tag" class="hide">
+            <h2>Tag content</h2>
+            <p>
+                TNF:     <span id="tnf" class="value">...</span> <br/>
+                Type:    <span id="type" class="value">...</span> <br/>
+                Payload: <span id="payload" class="value">...</span> <br/>
+            </p>
 
-        <h2>Optional record properties</h2>
-        <p id="type-text" class="hide">
-            Text: <span id="text" class="value">...</span> <br/>
-            Language code: <span id="language-code" class="value">...</span> <br/>
-            Encoding: <span id="encoding" class="value">...</span> <br/>
-        </p>
+            <h2>Optional record properties</h2>
+            <p id="type-text" class="hide">
+                Text: <span id="text" class="value">...</span> <br/>
+                Language code: <span id="language-code" class="value">...</span> <br/>
+                Encoding: <span id="encoding" class="value">...</span> <br/>
+            </p>
 
-        <p id="type-uri" class="hide">
-            URI: <span id="uri" class="value">...</span> <br/>
-        </p>
+            <p id="type-uri" class="hide">
+                URI: <span id="uri" class="value">...</span> <br/>
+            </p>
+
+            <h2>Write tag</h2>
+            <form name="write-form" onSubmit="return writeFormSubmit();">
+                <select name="write-form-type">
+                    <option>Text</option>
+                </select>
+                <input type="text" name="write-form-content" />
+                <input type="submit" value="Write" />
+            </form>
+        </div>
 
         <script src="js/main.js"></script>
     </body>

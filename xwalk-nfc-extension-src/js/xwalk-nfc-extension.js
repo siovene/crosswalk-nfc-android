@@ -14,6 +14,18 @@ var _messageToJson = function (id, content, args) {
     return JSON.stringify(obj);
 };
 
+var UUID = function () {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+
+    return function () {
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+               s4() + '-' + s4() + s4() + s4();
+    };
+};
 
 // =============================================================================
 // Object definitions
@@ -36,6 +48,10 @@ function NDEFRecord(tnf, type, id, _uuid) {
     this.type = type;
     this.id = id;
     this._uuid = _uuid;
+
+    if (this._uuid === undefined || this._uuid === null) {
+        this.__uuid = UUID();
+    }
 
     this.getPayload = function () {
         _next_response_id += 1;
@@ -69,8 +85,8 @@ function NDEFRecordEmpty(id, _uuid) {
     };
 }
 
-function NDEFRecordText(tnf, type, id, text, languageCode, encoding, _uuid) {
-    NDEFRecord.call(this, tnf, type, id, _uuid);
+function NDEFRecordText(text, languageCode, encoding, _uuid) {
+    NDEFRecord.call(this, 1, 'T', null, _uuid);
 
     this.text = text;
     this.languageCode = languageCode;
@@ -78,15 +94,16 @@ function NDEFRecordText(tnf, type, id, text, languageCode, encoding, _uuid) {
 }
 
 
-function NDEFRecordURI(tnf, type, id, uri, _uuid) {
-    NDEFRecord.call(this, tnf, type, id, _uuid);
+function NDEFRecordURI(uri, _uuid) {
+    NDEFRecord.call(this, 1, 'U', null, _uuid);
 
     this.uri = uri;
 }
 
 
-function NDEFMessage() {
-    this.records = [];
+function NDEFMessage(records, _uuid) {
+    this.records = records;
+    this._uuid = _uuid;
 
     this.getBytes = function () {
         // TODO
@@ -121,21 +138,15 @@ function NFCTag(_uuid) {
                     break;
 
                 case 1:
-                    if (argsJson.type === 'T') {
+                    if (argsJson.type.toLowerCase() === 't') {
                         record = new NDEFRecordText(
-                            argsJson.tnf,
-                            argsJson.type,
-                            argsJson.id,
                             argsJson.text,
                             argsJson.languageCode,
                             argsJson.encoding,
                             tag._uuid
                         );
-                    } else if (argsJson.type === 'U') {
+                    } else if (argsJson.type.toLowerCase() === 'u') {
                         record = new NDEFRecordURI(
-                            argsJson.tnf,
-                            argsJson.type,
-                            argsJson.id,
                             argsJson.uri,
                             tag._uuid
                         );
@@ -151,10 +162,23 @@ function NFCTag(_uuid) {
         });
     };
 
-    this.writeNDEF = function (message) {
-        // TODO
-        console.log(message);
-        return;
+    this.writeNDEF = function (ndefMessage) {
+        _next_response_id += 1;
+        var message = _messageToJson(
+            _next_response_id,
+            "nfc_tag_write_ndef",
+            JSON.stringify(ndefMessage)
+        );
+
+        return new Promise(function (resolve, reject) {
+            try {
+                var response = extension.internal.sendSyncMessage(message);
+                resolve();
+            } catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        });
     };
 }
 
@@ -294,6 +318,8 @@ function NFCManager() {
 
 exports.TNF = TNF;
 exports.NDEFRecord = NDEFRecord;
+exports.NDEFRecordText = NDEFRecordText;
+exports.NDEFRecordURI = NDEFRecordURI;
 exports.NDEFMessage = NDEFMessage;
 exports.NDEFMessageEvent = NDEFMessageEvent;
 exports.NFCTag = NFCTag;
