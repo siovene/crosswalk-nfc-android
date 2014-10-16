@@ -297,22 +297,17 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         JsonArray jsonRecords = data.getAsJsonObject().getAsJsonArray("records");
         NdefRecord[] records = new NdefRecord[jsonRecords.size()];
 
-        Log.d(NFC_DEBUG_TAG, "Records = " + jsonRecords.size());
-
         for (int i = 0; i < jsonRecords.size(); i++) {
-            Log.d(NFC_DEBUG_TAG, "Processing record " + i);
             JsonObject jsonRecord = jsonRecords.get(i).getAsJsonObject();
             int tnf = jsonRecord.get("tnf").getAsInt();
             String type = jsonRecord.get("type").getAsString();
             NdefRecord record = null;
 
-            Log.d(NFC_DEBUG_TAG, "TNF: " + tnf);
             switch (tnf) {
             case NdefRecord.TNF_EMPTY:
                 // Skip it
                 break;
             case NdefRecord.TNF_WELL_KNOWN:
-                Log.d(NFC_DEBUG_TAG, "Type: " + type);
                 if (type.toLowerCase().equals("t")) {
                     try {
                         record = createTextRecord(jsonRecord.get("text").getAsString());
@@ -330,7 +325,6 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             }
 
             records[i] = record;
-            Log.d(NFC_DEBUG_TAG, record.toString());
         }
 
 
