@@ -172,7 +172,7 @@ function NFCTag(_uuid) {
 
         return new Promise(function (resolve, reject) {
             try {
-                var response = extension.internal.sendSyncMessage(message);
+                extension.internal.sendSyncMessage(message);
                 resolve();
             } catch (e) {
                 console.error(e);

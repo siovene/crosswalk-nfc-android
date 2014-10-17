@@ -1,3 +1,5 @@
+/*jslint todo: true, nomen: true */
+
 'use strict';
 
 /*global nfc */
@@ -83,12 +85,13 @@ function reset() {
 function writeFormSubmit() {
     var type = document.getElementsByName('write-form-type')[0].value,
         content = document.getElementsByName('write-form-content')[0].value,
-        record, message;
+        record,
+        message;
 
     if (type === "Text") {
         record = new nfc.NDEFRecordText(content, "en-US", "UTF-8");
         message = new nfc.NDEFMessage([record], currentTag._uuid);
-        currentTag.writeNDEF(message).then(function() {
+        currentTag.writeNDEF(message).then(function () {
             reset();
         });
     }
