@@ -222,6 +222,19 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         return gson.toJson(response);
     }
 
+    private String[] readTextRecord(byte[] payload) throws UnsupportedEncodingException {
+        // encoding, languageCode, text
+        String[] result = new String[3];
+
+        int languageCodeLength = payload[0] & 0063;
+
+        result[0] = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16";
+        result[1] = new String(payload, 1, languageCodeLength, "US-ASCII");
+        result[2] = new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, result[0]);
+
+        return result;
+    }
+
     private String tagReadNDEF(int instanceId, InternalProtocolMessage request) {
         String uuid = request.args;
         Tag tag = nfcTagMap.get(uuid);
@@ -252,11 +265,19 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             break;
 
         case NdefRecord.TNF_WELL_KNOWN:
-            String type = new String(record.getType());
-            if (type.toLowerCase().equals("t")) {
-                jsonRecord.addProperty("text", new String(record.getPayload()));
-            } else if (type.toLowerCase().equals("u")) {
-                jsonRecord.addProperty("uri", new String(record.getPayload()));
+            try {
+                String type = new String(record.getType());
+                if (type.toLowerCase().equals("t")) {
+                    jsonRecord.addProperty("encoding", readTextRecord(record.getPayload())[0]);
+                    jsonRecord.addProperty("languageCode", readTextRecord(record.getPayload())[1]);
+                    jsonRecord.addProperty("text", readTextRecord(record.getPayload())[2]);
+                } else if (type.toLowerCase().equals("u")) {
+                    jsonRecord.addProperty("uri", new String(record.getPayload()));
+                }
+            } catch (UnsupportedEncodingException e) {
+                InternalProtocolMessage response = new InternalProtocolMessage(
+                    request.id, "nfc_status_fail", "Unsupported encoding", false);
+                return gson.toJson(response);
             }
             break;
         };
