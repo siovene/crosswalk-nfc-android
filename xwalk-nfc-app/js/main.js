@@ -42,8 +42,7 @@ nfc.NFCManager.prototype.ontagfound = function (e) {
         }
 
         record.getPayload().then(function (payload) {
-            document.getElementById("payload").textContent =
-                String.fromCharCode.apply(null, payload);
+            document.getElementById("payload").textContent = payload;
         });
     });
 };
