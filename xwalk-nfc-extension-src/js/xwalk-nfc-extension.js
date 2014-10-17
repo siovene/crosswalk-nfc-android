@@ -200,9 +200,10 @@ function NFCManager() {
             _next_response_id += 1;
             _callbacks[_next_response_id] = function (response) {
                 if (response.content === "nfc_state_on" && this.prototype.onpoweron !== undefined) {
-                    this.prototype.onpoweron();
+                    /*global document, CustomEvent */
+                    document.dispatchEvent(new CustomEvent('onpoweron'));
                 } else if (response.content === "nfc_state_off" && this.prototype.onpoweroff !== undefined) {
-                    this.prototype.onpoweroff();
+                    document.dispatchEvent(new CustomEvent('onpoweroff'));
                 }
             };
             extension.internal.sendSyncMessage(
@@ -293,9 +294,9 @@ function NFCManager() {
             _callbacks[_next_response_id] = function (response) {
                 if (_subscribed_tag_discovered) {
                     var tag = new NFCTag(response.args),
-                        evt = new NFCTagEvent(tag);
+                        evt = new CustomEvent('ontagfound', {'detail': tag});
 
-                    this.prototype.ontagfound(evt);
+                    document.dispatchEvent(evt);
                 }
             };
 

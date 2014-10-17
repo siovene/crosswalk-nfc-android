@@ -5,17 +5,16 @@ var manager = new nfc.NFCManager(),
     currentTag = null;
 
 // Event handlers
-nfc.NFCManager.prototype.onpoweron = function () {
-    /*global document */
+
+function onpoweron() {
     document.getElementById("power-status").textContent = "ON";
-};
+}
 
-nfc.NFCManager.prototype.onpoweroff = function () {
+function onpoweroff() {
     document.getElementById("power-status").textContent = "OFF";
-};
+}
 
-nfc.NFCManager.prototype.ontagfound = function (e) {
-    var tag = e.tag;
+function ontagfound(tag) {
     currentTag = tag;
     tag.readNDEF().then(function (record) {
         document.getElementById('tag').className = 'show';
@@ -45,12 +44,19 @@ nfc.NFCManager.prototype.ontagfound = function (e) {
             document.getElementById("payload").textContent = payload;
         });
     });
-};
+
+}
+
+/*global document */
+document.addEventListener('onpoweron', function () { onpoweron(); });
+document.addEventListener('onpoweroff', function () { onpoweroff(); });
+document.addEventListener('ontagfound', function (e) { ontagfound(e.detail); });
+
 
 if (manager.powered) {
-    manager.onpoweron();
+    onpoweron();
 } else {
-    manager.onpoweroff();
+    onpoweroff();
 }
 
 manager.startPoll().catch(function (e) {
