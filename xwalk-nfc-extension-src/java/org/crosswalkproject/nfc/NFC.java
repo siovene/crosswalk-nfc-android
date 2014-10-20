@@ -222,23 +222,11 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         return gson.toJson(response);
     }
 
-    private String[] readTextRecord(byte[] payload) throws UnsupportedEncodingException {
-        // encoding, languageCode, text
-        String[] result = new String[3];
-
-        int languageCodeLength = payload[0] & 0063;
-
-        result[0] = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16";
-        result[1] = new String(payload, 1, languageCodeLength, "US-ASCII");
-        result[2] = new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, result[0]);
-
-        return result;
-    }
-
     private String tagReadNDEF(int instanceId, InternalProtocolMessage request) {
         String uuid = request.args;
         Tag tag = nfcTagMap.get(uuid);
         Ndef ndef = Ndef.get(tag);
+        JsonObject jsonRecord = null;
 
         if (ndef == null) {
             Log.d(NFC_DEBUG_TAG, "NDEF is not supported by this Tag");
@@ -255,31 +243,23 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         NdefRecord record = records[0];
         ndefRecordMap.put(uuid, record);
 
-        JsonObject jsonRecord = new JsonObject();
-        jsonRecord.addProperty("tnf", record.getTnf());
-        jsonRecord.addProperty("type", new String(record.getType()));
-        jsonRecord.addProperty("id", new String(record.getId()));
-
         switch (record.getTnf()) {
         case NdefRecord.TNF_EMPTY:
             break;
 
         case NdefRecord.TNF_WELL_KNOWN:
-            try {
-                String type = new String(record.getType());
-                if (type.toLowerCase().equals("t")) {
-                    jsonRecord.addProperty("encoding", readTextRecord(record.getPayload())[0]);
-                    jsonRecord.addProperty("languageCode", readTextRecord(record.getPayload())[1]);
-                    jsonRecord.addProperty("text", readTextRecord(record.getPayload())[2]);
-                } else if (type.toLowerCase().equals("u")) {
-                    jsonRecord.addProperty("uri", new String(record.getPayload()));
-                }
-            } catch (UnsupportedEncodingException e) {
-                InternalProtocolMessage response = new InternalProtocolMessage(
-                    request.id, "nfc_status_fail", "Unsupported encoding", false);
-                return gson.toJson(response);
+            String type = new String(record.getType());
+            if (type.toLowerCase().equals("t")) {
+                jsonRecord = new NdefTextRecordIO().read(record).getAsJsonObject();
+            } else if (type.toLowerCase().equals("u")) {
+                // TODO: make an NdefURIRecordIO.
+                jsonRecord = new JsonObject();
+                jsonRecord.addProperty("uri", new String(record.getPayload()));
             }
             break;
+
+        default:
+            jsonRecord = new JsonObject();
         };
 
         jsonRecord.addProperty("uuid", uuid);
