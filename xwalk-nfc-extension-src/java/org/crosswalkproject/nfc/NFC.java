@@ -162,7 +162,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 Integer instanceId = entry.getKey();
                 InternalProtocolMessage request = entry.getValue();
 
-                InternalProtocolMessage response = new InternalProtocolMessage(request.id, nfc_state, null, false);
+                InternalProtocolMessage response = new InternalProtocolMessage(request.id, nfc_state, null, true);
                 postMessage(instanceId, gson.toJson(response));
             }
         }

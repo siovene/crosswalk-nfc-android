@@ -199,10 +199,10 @@ function NFCManager() {
 
             _next_response_id += 1;
             _callbacks[_next_response_id] = function (response) {
-                if (response.content === "nfc_state_on" && this.prototype.onpoweron !== undefined) {
+                if (response.content === "nfc_state_on") {
                     /*global document, CustomEvent */
                     document.dispatchEvent(new CustomEvent('onpoweron'));
-                } else if (response.content === "nfc_state_off" && this.prototype.onpoweroff !== undefined) {
+                } else if (response.content === "nfc_state_off") {
                     document.dispatchEvent(new CustomEvent('onpoweroff'));
                 }
             };
