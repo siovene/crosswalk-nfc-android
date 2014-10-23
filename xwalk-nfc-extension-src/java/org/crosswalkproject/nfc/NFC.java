@@ -226,7 +226,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         String uuid = request.args;
         Tag tag = nfcTagMap.get(uuid);
         Ndef ndef = Ndef.get(tag);
-        JsonObject jsonRecord = null;
+        JsonObject jsonMessage = new JsonObject();
 
         if (ndef == null) {
             Log.d(NFC_DEBUG_TAG, "NDEF is not supported by this Tag");
@@ -237,35 +237,44 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         NdefMessage message = ndef.getCachedNdefMessage();
         NdefRecord[] records = message.getRecords();
+        JsonArray jsonRecords = new JsonArray();
 
-        // W3C spec mentions only one record. Let's return the first one and
-        // we'll see later about updating this.
-        NdefRecord record = records[0];
-        ndefRecordMap.put(uuid, record);
+        for (int i = 0; i < records.length; i++) {
+            NdefRecord record = records[i];
+            ndefRecordMap.put(uuid, record);
 
-        switch (record.getTnf()) {
-        case NdefRecord.TNF_EMPTY:
-            break;
+            JsonObject jsonRecord = null;
 
-        case NdefRecord.TNF_WELL_KNOWN:
-            String type = new String(record.getType());
-            if (type.toLowerCase().equals("t")) {
-                jsonRecord = new NdefTextRecordIO().read(record).getAsJsonObject();
-            } else if (type.toLowerCase().equals("u")) {
-                // TODO: make an NdefURIRecordIO.
+            // TODO: perform NdefMessage IO.
+            jsonMessage = new JsonObject();
+
+            switch (record.getTnf()) {
+            case NdefRecord.TNF_EMPTY:
+                break;
+
+            case NdefRecord.TNF_WELL_KNOWN:
+                String type = new String(record.getType());
+                if (type.toLowerCase().equals("t")) {
+                    jsonRecord = new NdefTextRecordIO().read(record).getAsJsonObject();
+                } else if (type.toLowerCase().equals("u")) {
+                    // TODO: make an NdefURIRecordIO.
+                    jsonRecord = new JsonObject();
+                    jsonRecord.addProperty("uri", new String(record.getPayload()));
+                }
+                break;
+
+            default:
                 jsonRecord = new JsonObject();
-                jsonRecord.addProperty("uri", new String(record.getPayload()));
-            }
-            break;
+            };
 
-        default:
-            jsonRecord = new JsonObject();
-        };
+            jsonRecord.addProperty("uuid", uuid);
+            jsonRecords.add(jsonRecord);
+        }
 
-        jsonRecord.addProperty("uuid", uuid);
+        jsonMessage.add("records", jsonRecords);
 
         InternalProtocolMessage response = new InternalProtocolMessage(
-            request.id, "nfc_status_ok", gson.toJson(jsonRecord), false);
+            request.id, "nfc_status_ok", gson.toJson(jsonMessage), false);
         return gson.toJson(response);
     }
 

@@ -18,7 +18,9 @@ function onpoweroff() {
 
 function ontagfound(tag) {
     currentTag = tag;
-    tag.readNDEF().then(function (record) {
+    tag.readNDEF().then(function (message) {
+        var record = message.records[0];
+
         document.getElementById('tag').className = 'show';
 
         document.getElementById("tnf").textContent = nfc.TNF[record.tnf];

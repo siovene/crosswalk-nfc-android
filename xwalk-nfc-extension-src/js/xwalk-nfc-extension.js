@@ -130,31 +130,39 @@ function NFCTag(_uuid) {
                 var response = extension.internal.sendSyncMessage(message),
                     responseJson = JSON.parse(response),
                     argsJson = JSON.parse(responseJson.args),
-                    record;
+                    recordsJson = argsJson.records,
+                    record = null,
+                    records = [];
 
-                switch (argsJson.tnf) {
-                case 0:
-                    record = new NDEFRecordEmpty(argsJson.id, tag._uuid);
-                    break;
+                for (var i = 0; i < recordsJson.length; i++) {
+                    var recordJson = recordsJson[i];
 
-                case 1:
-                    if (argsJson.type.toLowerCase() === 't') {
-                        record = new NDEFRecordText(
-                            argsJson.text,
-                            argsJson.languageCode,
-                            argsJson.encoding,
-                            tag._uuid
-                        );
-                    } else if (argsJson.type.toLowerCase() === 'u') {
-                        record = new NDEFRecordURI(
-                            argsJson.uri,
-                            tag._uuid
-                        );
+                    switch (recordJson.tnf) {
+                    case 0:
+                        record = new NDEFRecordEmpty(recordJson.id, tag._uuid);
+                        break;
+
+                    case 1:
+                        if (recordJson.type.toLowerCase() === 't') {
+                            record = new NDEFRecordText(
+                                recordJson.text,
+                                recordJson.languageCode,
+                                recordJson.encoding,
+                                tag._uuid
+                            );
+                        } else if (recordJson.type.toLowerCase() === 'u') {
+                            record = new NDEFRecordURI(
+                                recordJson.uri,
+                                tag._uuid
+                            );
+                        }
+                        break;
                     }
-                    break;
+
+                    records.push(record);
                 }
 
-                resolve(record);
+                resolve(new NDEFMessage(records, tag._uuid));
             } catch (e) {
                 console.error(e);
                 reject(e);
