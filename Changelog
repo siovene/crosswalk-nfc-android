@@ -1,0 +1,4 @@
+2014-10-23 Salvatore Iovene <salvatore.iovene@intel.com>
+	* Bump version to 0.2.
+	* Fix issue with persistency of adapter status callback.
+	* Reorg record deserialization code.
