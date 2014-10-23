@@ -60,8 +60,6 @@ public class NdefTextRecordDeserializer
         else
             text = new String("");
 
-        Log.d("XWALK_NFC", "Text is " + text);
-
         // Unfortunately we can't use NdefRecord.createTextRecord because that
         // is only available since API Level 21.
         try {
