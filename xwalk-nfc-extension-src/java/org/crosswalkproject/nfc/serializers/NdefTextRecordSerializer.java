@@ -20,7 +20,7 @@ public class NdefTextRecordSerializer
         // encoding, languageCode, text
         String[] result = new String[3];
 
-        int languageCodeLength = payload[0] & 0063;
+        int languageCodeLength = payload[0] & 63;
 
         result[0] = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16";
         result[1] = new String(payload, 1, languageCodeLength, "US-ASCII");

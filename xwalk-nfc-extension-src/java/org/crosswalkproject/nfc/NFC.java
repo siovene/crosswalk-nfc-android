@@ -269,29 +269,6 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         return gson.toJson(response);
     }
 
-    private NdefRecord createTextRecord(String text) throws UnsupportedEncodingException {
-        String lang       = "en";
-        byte[] textBytes  = text.getBytes();
-        byte[] langBytes  = lang.getBytes("US-ASCII");
-        int    langLength = langBytes.length;
-        int    textLength = textBytes.length;
-        byte[] payload    = new byte[1 + langLength + textLength];
-
-        // set status byte (see NDEF spec for actual bits)
-        payload[0] = (byte) langLength;
-
-        // copy langbytes and textbytes into payload
-        System.arraycopy(langBytes, 0, payload, 1,              langLength);
-        System.arraycopy(textBytes, 0, payload, 1 + langLength, textLength);
-
-        NdefRecord record = new NdefRecord(NdefRecord.TNF_WELL_KNOWN,
-                                           NdefRecord.RTD_TEXT,
-                                           new byte[0],
-                                           payload);
-
-        return record;
-    }
-
     private String tagWriteNDEF(int instanceId, InternalProtocolMessage request) {
         JsonParser parser = new JsonParser();
         JsonElement data = parser.parse(request.args);
@@ -311,10 +288,10 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             case NdefRecord.TNF_WELL_KNOWN:
                 if (type.toLowerCase().equals("t")) {
                     try {
-                        record = createTextRecord(jsonRecord.get("text").getAsString());
-                    } catch (UnsupportedEncodingException e) {
+                        record = new NdefTextRecordIO().write(gson.toJson(jsonRecord));
+                    } catch (JsonParseException e) {
                         InternalProtocolMessage response = new InternalProtocolMessage(
-                            request.id, "nfc_status_fail", "Unsupported encoding", false);
+                            request.id, "nfc_status_fail", "Invalid JSON", false);
                         return gson.toJson(response);
                     }
                 }
