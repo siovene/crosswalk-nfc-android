@@ -5,4 +5,4 @@ An implementation of W3C NFC API for Crosswalk on Android.
 `./build.sh`
 
 # Install for ARM
-`adb install -r xwalk-nfc-extension-src/lib/crosswalk-10.38.221.0/Nfc_0.1_arm.apk`
+`adb install -r xwalk-nfc-extension-src/lib/crosswalk-10.38.221.0/Nfc_$(VERSION)_arm.apk`
