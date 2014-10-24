@@ -96,7 +96,7 @@ gulp.task('make_apk', ['ant'], function () {
         }));
 });
 
-gulp.task('bump', ['lint', 'jsonlint'], function () {
+gulp.task('bump', ['jslint', 'jsonlint'], function () {
     gulp.src('./package.json')
         .pipe(bump())
         .pipe(gulp.dest('./'));
