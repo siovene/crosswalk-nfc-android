@@ -1,6 +1,6 @@
 {
     "name": "xwalk_nfc_app",
-    "version": "0.3",
+    "version": "0.3.0",
     "start_url": "index.html",
     "icons": [
         {

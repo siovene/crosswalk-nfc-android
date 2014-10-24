@@ -1,5 +1,7 @@
 *.swp
 
+/node_modules
+
 /xwalk-nfc-extension-src/build
 /xwalk-nfc-extension-src/lib
 /xwalk-nfc-extension-src/tools/apache-ivy-*

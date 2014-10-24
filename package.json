@@ -1,0 +1,30 @@
+{
+  "name": "xwalk-nfc-extension",
+  "version": "0.3.0",
+  "description": "An implementation of the W3C NFC API for Crosswalk on Android",
+  "author": "Salvatore Iovene <salvatore.iovene@intel.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/siovene/crosswalk-nfc-android/"
+  },
+  "bugs": {
+    "url": "https://github.com/siovene/crosswalk-nfc-android/issues"
+  },
+  "keywoards": [
+    "NFC",
+    "Crosswalk",
+    "Android"
+  ],
+  "devDependencies": [
+    "gulp",
+    "jslint",
+    "gulp-util",
+    "gulp-debug",
+    "gulp-jslint",
+    "gulp-download",
+    "gulp-unzip",
+    "gulp-shell",
+    "gulp-bump",
+    "gulp-jsonlint"
+  ]
+}
