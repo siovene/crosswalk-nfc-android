@@ -9,6 +9,7 @@ var manager = new nfc.NFCManager(),
 // Event handlers
 
 function onpoweron() {
+    /*global document */
     document.getElementById("power-status").textContent = "ON";
 }
 
@@ -51,7 +52,6 @@ function ontagfound(tag) {
 
 }
 
-/*global document */
 document.addEventListener('onpoweron', function () { onpoweron(); });
 document.addEventListener('onpoweroff', function () { onpoweroff(); });
 document.addEventListener('ontagfound', function (e) { ontagfound(e.detail); });

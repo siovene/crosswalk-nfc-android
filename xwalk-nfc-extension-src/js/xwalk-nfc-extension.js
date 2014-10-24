@@ -1,4 +1,4 @@
-/*jslint todo: true, nomen: true */
+/*jslint todo: true, nomen: true, plusplus: true */
 
 'use strict';
 
@@ -131,11 +131,13 @@ function NFCTag(_uuid) {
                     responseJson = JSON.parse(response),
                     argsJson = JSON.parse(responseJson.args),
                     recordsJson = argsJson.records,
+                    recordJson,
                     record = null,
-                    records = [];
+                    records = [],
+                    i;
 
-                for (var i = 0; i < recordsJson.length; i++) {
-                    var recordJson = recordsJson[i];
+                for (i = 0; i < recordsJson.length; i++) {
+                    recordJson = recordsJson[i];
 
                     switch (recordJson.tnf) {
                     case 0:
