@@ -14,11 +14,17 @@ var gulp = require('gulp'),
 
     path = require('path'),
     fs = require('fs'),
+    minimist = require('minimist'),
+
+    // Keep in sync with xwalk-nfc-extension-src/build.xml.
+    crosswalkVersion = "10.38.221.0",
+
+    argv = minimist(process.argv.slice(2)),
 
     paths = {
         extension: 'xwalk-nfc-extension-src',
         tools: 'xwalk-nfc-extension-src/tools',
-        xwalk: 'xwalk-nfc-extension-src/lib/crosswalk-10.38.221.0',
+        xwalk: 'xwalk-nfc-extension-src/lib/crosswalk-' + crosswalkVersion,
         app: 'xwalk-nfc-app',
         js: [
             'gulpfile.js',
@@ -92,6 +98,19 @@ gulp.task('make_apk', ['ant'], function () {
             templateData: {
                 app: path.join(topdir, paths.app),
                 extension: path.join(topdir, paths.extension)
+            }
+        }));
+});
+
+gulp.task('install', ['make_apk'], function () {
+    var config = require('./package.json');
+
+    return gulp.src(paths.xwalk)
+        .pipe(shell("adb install -r Nfc_<%= version %>_<%= arch %>.apk", {
+            cwd: paths.xwalk,
+            templateData: {
+                version: config.version,
+                arch: argv.arch
             }
         }));
 });
