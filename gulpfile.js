@@ -116,12 +116,18 @@ gulp.task('install', ['make_apk'], function () {
 });
 
 gulp.task('bump', ['jslint', 'jsonlint'], function () {
+    var type = argv.type;
+
+    if (type === undefined) {
+        type = 'patch';
+    }
+
     gulp.src('./package.json')
-        .pipe(bump())
+        .pipe(bump({type: type}))
         .pipe(gulp.dest('./'));
 
     gulp.src(path.join(paths.app, 'manifest.json'))
-        .pipe(bump())
+        .pipe(bump({type: type}))
         .pipe(gulp.dest(paths.app));
 });
 
