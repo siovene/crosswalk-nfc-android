@@ -257,9 +257,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 if (type.toLowerCase().equals("t")) {
                     jsonRecord = new NdefTextRecordIO().read(record).getAsJsonObject();
                 } else if (type.toLowerCase().equals("u")) {
-                    // TODO: make an NdefURIRecordIO.
-                    jsonRecord = new JsonObject();
-                    jsonRecord.addProperty("uri", new String(record.getPayload()));
+                    jsonRecord = new NdefURIRecordIO().read(record).getAsJsonObject();
                 }
                 break;
 
@@ -298,6 +296,14 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 if (type.toLowerCase().equals("t")) {
                     try {
                         record = new NdefTextRecordIO().write(gson.toJson(jsonRecord));
+                    } catch (JsonParseException e) {
+                        InternalProtocolMessage response = new InternalProtocolMessage(
+                            request.id, "nfc_status_fail", "Invalid JSON", false);
+                        return gson.toJson(response);
+                    }
+                } else if (type.toLowerCase().equals("u")) {
+                    try {
+                        record = new NdefURIRecordIO().write(gson.toJson(jsonRecord));
                     } catch (JsonParseException e) {
                         InternalProtocolMessage response = new InternalProtocolMessage(
                             request.id, "nfc_status_fail", "Invalid JSON", false);

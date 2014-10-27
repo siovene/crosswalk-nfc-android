@@ -1,6 +1,6 @@
 /*jslint todo: true, nomen: true */
 
-(function () {
+(function (win) {
     'use strict';
 
     /*global nfc */
@@ -94,14 +94,18 @@
 
         if (type === "Text") {
             record = new nfc.NDEFRecordText(content, "en-US", "UTF-8");
-            message = new nfc.NDEFMessage([record], currentTag._uuid);
-            currentTag.writeNDEF(message).then(function () {
-                reset();
-            });
+        } else if (type === "URI") {
+            record = new nfc.NDEFRecordURI(content);
         }
+
+        message = new nfc.NDEFMessage([record], currentTag._uuid);
+        currentTag.writeNDEF(message).then(function () {
+            reset();
+        });
 
         return false;
     }
 
-    undefined(writeFormSubmit);
-}());
+    win.writeFormSubmit = writeFormSubmit;
+    /*global window*/
+}(window));
