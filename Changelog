@@ -1,4 +1,9 @@
 2014-10-30 Salvatore Iovene <salvatore.iovene@intel.com>
+	* Bump version to 0.5.1.
+	* Change name of demo app.
+	* Add gulp task to make releases.
+
+2014-10-30 Salvatore Iovene <salvatore.iovene@intel.com>
 	* Bump version to 0.5.0.
 	* Export objects to the navigator object.
 

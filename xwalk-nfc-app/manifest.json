@@ -1,6 +1,6 @@
 {
-    "name": "xwalk_nfc_app",
-    "version": "0.5.0",
+    "name": "Crosswalk NFC Demo",
+    "version": "0.5.1",
     "start_url": "index.html",
     "icons": [
         {
