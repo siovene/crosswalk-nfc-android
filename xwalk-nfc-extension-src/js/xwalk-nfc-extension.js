@@ -339,4 +339,17 @@
     exports.NFCTag = NFCTag;
     exports.NFCTagEvent = NFCTagEvent;
     exports.NFCManager = NFCManager;
+
+    /*global navigator */
+    navigator.nfc = new NFCManager();
+
+    navigator.nfc.TNF = TNF;
+    navigator.nfc.NDEFRecord = NDEFRecord;
+    navigator.nfc.NDEFRecordText = NDEFRecordText;
+    navigator.nfc.NDEFRecordURI = NDEFRecordURI;
+    navigator.nfc.NDEFMessage = NDEFMessage;
+    navigator.nfc.NDEFMessageEvent = NDEFMessageEvent;
+    navigator.nfc.NFCTag = NFCTag;
+    navigator.nfc.NFCTagEvent = NFCTagEvent;
+
 }());

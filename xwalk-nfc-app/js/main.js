@@ -3,8 +3,14 @@
 (function (win) {
     'use strict';
 
-    /*global nfc */
-    var manager = new nfc.NFCManager(),
+    // Trigger loading of extension, because the navigator.nfc entry point
+    // is currently not possible.
+    // See: https://crosswalk-project.org/jira/browse/XWALK-2840
+    /*global console, nfc */
+    console.log(nfc.NFCManager);
+
+    /*global navigator */
+    var manager = navigator.nfc,
         currentTag = null;
 
     // Event handlers
@@ -25,7 +31,7 @@
 
             document.getElementById('tag').className = 'show';
 
-            document.getElementById("tnf").textContent = nfc.TNF[record.tnf];
+            document.getElementById("tnf").textContent = navigator.nfc.TNF[record.tnf];
             document.getElementById("type").textContent = record.type;
 
             switch (record.tnf) {
@@ -93,12 +99,12 @@
             message;
 
         if (type === "Text") {
-            record = new nfc.NDEFRecordText(content, "en-US", "UTF-8");
+            record = new navigator.nfc.NDEFRecordText(content, "en-US", "UTF-8");
         } else if (type === "URI") {
-            record = new nfc.NDEFRecordURI(content);
+            record = new navigator.nfc.NDEFRecordURI(content);
         }
 
-        message = new nfc.NDEFMessage([record], currentTag._uuid);
+        message = new navigator.nfc.NDEFMessage([record], currentTag._uuid);
         currentTag.writeNDEF(message).then(function () {
             reset();
         });
@@ -107,5 +113,6 @@
     }
 
     win.writeFormSubmit = writeFormSubmit;
+
     /*global window*/
 }(window));
