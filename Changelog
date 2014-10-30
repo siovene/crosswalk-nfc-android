@@ -1,3 +1,7 @@
+2014-10-30 Salvatore Iovene <salvatore.iovene@intel.com>
+	* Bump version to 0.5.0.
+	* Export objects to the navigator object.
+
 2014-10-27 Salvatore Iovene <salvatore.iovene@intel.com>
 	* Bump version to 0.4.0.
 	* Add support for URI records.
