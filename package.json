@@ -23,6 +23,7 @@
     "gulp-debug",
     "gulp-jslint",
     "gulp-download",
+    "gulp-zip",
     "gulp-unzip",
     "gulp-shell",
     "gulp-bump",

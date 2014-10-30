@@ -8,6 +8,7 @@ var gulp = require('gulp'),
     jslint = require('gulp-jslint'),
     jsonlint = require('gulp-jsonlint'),
     download = require('gulp-download'),
+    zip = require('gulp-zip'),
     unzip = require('gulp-unzip'),
     shell = require('gulp-shell'),
     bump = require('gulp-bump'),
@@ -129,6 +130,21 @@ gulp.task('bump', ['jslint', 'jsonlint'], function () {
     gulp.src(path.join(paths.app, 'manifest.json'))
         .pipe(bump({type: type}))
         .pipe(gulp.dest(paths.app));
+});
+
+gulp.task('release', ['make_apk'], function () {
+    var config = require('./package.json'),
+        files = [
+            path.join(paths.xwalk, "Nfc_" + config.version + "_arm.apk"),
+            path.join(paths.xwalk, "Nfc_" + config.version + "_x86.apk"),
+            path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.jar"),
+            path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.js"),
+            path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.json")
+        ];
+
+    gulp.src(files)
+        .pipe(zip('xwalk-nfc-extension-' + config.version + '.zip'))
+        .pipe(gulp.dest('releases'));
 });
 
 gulp.task('default', ['jsonlint', 'jslint', 'ivy', 'ant', 'make_apk']);

@@ -1,6 +1,7 @@
 *.swp
 
 /node_modules
+/releases
 
 /xwalk-nfc-extension-src/build
 /xwalk-nfc-extension-src/lib
