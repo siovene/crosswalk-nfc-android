@@ -94,7 +94,7 @@ gulp.task('make_apk', ['ant'], function () {
     /*jslint nomen: false */
 
     return gulp.src(paths.xwalk)
-        .pipe(shell("python make_apk.py --enable-remote-debugging --manifest=<%= app %>/manifest.json --extensions=<%= extension %>/xwalk-nfc-extension/ --package=org.crosswalkproject.nfc", {
+        .pipe(shell("python make_apk.py --enable-remote-debugging --manifest=<%= app %>/manifest.json --extensions=<%= extension %>/xwalk-nfc-extension/ --package=org.crosswalkproject.crosswalk_nfc_demo", {
             cwd: paths.xwalk,
             templateData: {
                 app: path.join(topdir, paths.app),
@@ -107,7 +107,7 @@ gulp.task('install', ['make_apk'], function () {
     var config = require('./package.json');
 
     return gulp.src(paths.xwalk)
-        .pipe(shell("adb install -r Nfc_<%= version %>_<%= arch %>.apk", {
+        .pipe(shell("adb install -r CrosswalkNfcDemo_<%= version %>_<%= arch %>.apk", {
             cwd: paths.xwalk,
             templateData: {
                 version: config.version,
@@ -135,8 +135,8 @@ gulp.task('bump', ['jslint', 'jsonlint'], function () {
 gulp.task('release', ['make_apk'], function () {
     var config = require('./package.json'),
         files = [
-            path.join(paths.xwalk, "Nfc_" + config.version + "_arm.apk"),
-            path.join(paths.xwalk, "Nfc_" + config.version + "_x86.apk"),
+            path.join(paths.xwalk, "CrosswalkNfcDemo_" + config.version + "_arm.apk"),
+            path.join(paths.xwalk, "CrosswalkNfcDemo_" + config.version + "_x86.apk"),
             path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.jar"),
             path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.js"),
             path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.json")
