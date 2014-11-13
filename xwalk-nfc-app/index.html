@@ -45,13 +45,20 @@
                 URI: <span id="uri" class="value">...</span> <br/>
             </p>
 
+            <p id="type-image" class="hide">
+                Image:
+                <img id="image" src="" />
+            </p>
+
             <h2>Write tag</h2>
             <form name="write-form" onSubmit="return writeFormSubmit();">
                 <select name="write-form-type">
                     <option>Text</option>
                     <option>URI</option>
+                    <option>File</option>
                 </select>
                 <input type="text" name="write-form-content" />
+                <input type="file" name="write-form-content-file" />
                 <input type="submit" value="Write" />
             </form>
         </div>

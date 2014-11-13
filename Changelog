@@ -1,3 +1,10 @@
+2014-11-13 Salvatore Iovene <salvatore.iovene@intel.com>
+	* Bump version to 0.6.0.
+	* Add support for media records.
+	* Clean up internal js/java messaging.
+	* Require Crosswalk 10.39.235.3 (because of File Chooser fix).
+	* Fix issue with build process when changing the needed Crosswalk version.
+
 2014-10-30 Salvatore Iovene <salvatore.iovene@intel.com>
 	* Bump version to 0.5.1.
 	* Change name of demo app.

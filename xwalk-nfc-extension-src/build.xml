@@ -7,10 +7,10 @@
   <property name="lib" value="lib" />
 
   <!-- Crosswalk Android version -->
-  <property name="crosswalk-version" value="10.38.221.0" />
+  <property name="crosswalk-version" value="10.39.235.3" />
 
   <!-- location of downloaded Crosswalk Android file -->
-  <property name="crosswalk-zip" value="${lib}/crosswalk.zip" />
+  <property name="crosswalk-zip" value="${lib}/crosswalk-${crosswalk-version}.zip" />
 
   <!-- temporary build directory -->
   <property name="build" value="build" />
@@ -53,7 +53,7 @@
   <target name="download-crosswalk" depends="prepare, check-crosswalk-present"
           unless="crosswalk-zip.present">
     <!-- fetch from the download site -->
-    <get src="https://download.01.org/crosswalk/releases/crosswalk/android/canary/${crosswalk-version}/crosswalk-${crosswalk-version}.zip" dest="${crosswalk-zip}" />
+    <get src="https://download.01.org/crosswalk/releases/crosswalk/android/beta/${crosswalk-version}/crosswalk-${crosswalk-version}.zip" dest="${crosswalk-zip}" />
 
     <!-- unpack to lib/crosswalk-*/ -->
     <unzip src="${crosswalk-zip}" dest="${lib}" />
@@ -67,6 +67,7 @@
         <file file="${env.ANDROID_HOME}/platforms/android-19/android.jar" />
         <fileset dir="${lib}" includes="*.jar" />
         <file file="${lib}/crosswalk-${crosswalk-version}/template/libs/xwalk_app_runtime_java.jar" />
+        <file file="${lib}/crosswalk-${crosswalk-version}/xwalk_core_library/libs/xwalk_core_library_java_app_part.jar" />
       </classpath>
     </javac>
   </target>

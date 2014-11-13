@@ -15,12 +15,15 @@ import android.content.IntentFilter.MalformedMimeTypeException;
 import android.nfc.NfcAdapter;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
+import android.nfc.FormatException;
 import android.nfc.Tag;
+import android.nfc.TagLostException;
 import android.nfc.tech.Ndef;
 import android.provider.Settings;
 import android.util.Log;
 
 // Java
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.ArrayList;
@@ -134,6 +137,15 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     // Internals
     // ------------------------------------------------------------------------
 
+    private String buildIPM(String id, String content, String args, boolean persistent) {
+        InternalProtocolMessage msg = new InternalProtocolMessage(id, content, args, persistent);
+        return gson.toJson(msg);
+    }
+
+    private String failIPM(String id, String msg) {
+        return buildIPM(id, "nfc_status_fail", msg, false);
+    }
+
     private void startDetectingNfcStateChanges() {
         this.androidContext.registerReceiver(
             nfcStateChangeBroadcastReceiver,
@@ -162,8 +174,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 Integer instanceId = entry.getKey();
                 InternalProtocolMessage request = entry.getValue();
 
-                InternalProtocolMessage response = new InternalProtocolMessage(request.id, nfc_state, null, true);
-                postMessage(instanceId, gson.toJson(response));
+                postMessage(instanceId, buildIPM(request.id, nfc_state, null, true));
             }
         }
     }
@@ -178,8 +189,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 uuid = UUID.randomUUID().toString();
             nfcTagMap.put(uuid, tag);
 
-            InternalProtocolMessage response = new InternalProtocolMessage(request.id, "nfc_tag_discovered", uuid, true);
-            postMessage(instanceId, gson.toJson(response));
+            postMessage(instanceId, buildIPM(request.id, "nfc_tag_discovered", uuid, true));
         }
     }
 
@@ -190,8 +200,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
     private String powerOnOff(InternalProtocolMessage request) {
         this.androidContext.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-        InternalProtocolMessage response = new InternalProtocolMessage(request.id, "nfc_settings_shown", null, false);
-        return gson.toJson(response);
+        return buildIPM(request.id, "nfc_settings_shown", null, false);
     }
 
     private String powerState(InternalProtocolMessage request) {
@@ -200,26 +209,22 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         if(enabled)
             responseContent = "on";
 
-        InternalProtocolMessage response = new InternalProtocolMessage(request.id, responseContent, null, false);
-        return gson.toJson(response);
+        return buildIPM(request.id, responseContent, null, false);
     }
 
     private String subscribePowerStateChanged(int instanceId, InternalProtocolMessage request) {
         this.nfcStateChangeSubscribers.put((Integer) instanceId, request);
-        InternalProtocolMessage response = new InternalProtocolMessage(request.id, "nfc_status_ok", null, false);
-        return gson.toJson(response);
+        return buildIPM(request.id, "nfc_status_ok", null, false);
     }
 
     private String unsubscribePowerStateChanged(int instanceId, InternalProtocolMessage request) {
         this.nfcStateChangeSubscribers.remove((Integer) instanceId);
-        InternalProtocolMessage response = new InternalProtocolMessage(request.id, "nfc_status_ok", null, false);
-        return gson.toJson(response);
+        return buildIPM(request.id, "nfc_status_ok", null, false);
     }
 
     private String subscribeTagDiscovered(int instanceId, InternalProtocolMessage request) {
         this.nfcTagDiscoveredSubscribers.put((Integer) instanceId, request);
-        InternalProtocolMessage response = new InternalProtocolMessage(request.id, "nfc_status_ok", null, true);
-        return gson.toJson(response);
+        return buildIPM(request.id, "nfc_status_ok", null, true);
     }
 
     private String tagReadNDEF(int instanceId, InternalProtocolMessage request) {
@@ -230,9 +235,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         if (ndef == null) {
             Log.d(NFC_DEBUG_TAG, "NDEF is not supported by this Tag");
-            InternalProtocolMessage response = new InternalProtocolMessage(
-                request.id, "nfc_status_error", "nfc_ndef_not_supported", false);
-            return gson.toJson(response);
+            return buildIPM(request.id, "nfc_status_error", "nfc_ndef_not_supported", false);
         }
 
         NdefMessage message = ndef.getCachedNdefMessage();
@@ -261,6 +264,10 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 }
                 break;
 
+            case NdefRecord.TNF_MIME_MEDIA:
+                jsonRecord = new NdefMediaRecordIO().read(record).getAsJsonObject();
+                break;
+
             default:
                 jsonRecord = new JsonObject();
             };
@@ -271,9 +278,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         jsonMessage.add("records", jsonRecords);
 
-        InternalProtocolMessage response = new InternalProtocolMessage(
-            request.id, "nfc_status_ok", gson.toJson(jsonMessage), false);
-        return gson.toJson(response);
+        return buildIPM(request.id, "nfc_status_ok", gson.toJson(jsonMessage), false);
     }
 
     private String tagWriteNDEF(int instanceId, InternalProtocolMessage request) {
@@ -297,24 +302,21 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                     try {
                         record = new NdefTextRecordIO().write(gson.toJson(jsonRecord));
                     } catch (JsonParseException e) {
-                        InternalProtocolMessage response = new InternalProtocolMessage(
-                            request.id, "nfc_status_fail", "Invalid JSON", false);
-                        return gson.toJson(response);
+                        return failIPM(request.id, "Invalid JSON");
                     }
                 } else if (type.toLowerCase().equals("u")) {
                     try {
                         record = new NdefURIRecordIO().write(gson.toJson(jsonRecord));
                     } catch (JsonParseException e) {
-                        InternalProtocolMessage response = new InternalProtocolMessage(
-                            request.id, "nfc_status_fail", "Invalid JSON", false);
-                        return gson.toJson(response);
+                        return failIPM(request.id, "Invalid JSON");
                     }
                 }
                 break;
+            case NdefRecord.TNF_MIME_MEDIA:
+                record = new NdefMediaRecordIO().write(gson.toJson(jsonRecord));
+                break;
             default:
-                InternalProtocolMessage response = new InternalProtocolMessage(
-                    request.id, "nfc_status_fail", "Invalid type", false);
-                return gson.toJson(response);
+                return failIPM(request.id, "Invalid type");
             }
 
             records[i] = record;
@@ -327,27 +329,44 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
         try {
             ndef.connect();
-            ndef.writeNdefMessage(message);
-            ndef.close();
-        } catch (Exception e) {
-            InternalProtocolMessage response = new InternalProtocolMessage(
-                request.id, "nfc_status_fail", "I/O error", false);
-            return gson.toJson(response);
+            if (ndef.isWritable()) {
+                int size = message.toByteArray().length;
+                if (ndef.getMaxSize() < size) {
+                    return failIPM(
+                        request.id,
+                        "Message content is too large. " +
+                        "Tag capacity: " + ndef.getMaxSize() +
+                        ", message size: " + size);
+                } else {
+                    ndef.writeNdefMessage(message);
+                    ndef.close();
+                }
+            } else {
+                return failIPM(request.id, "Tag is read only");
+            }
+        } catch (TagLostException e) {
+            return failIPM(request.id, "Tag lost");
+        } catch (IOException e) {
+            return failIPM(request.id, "I/O error: " + e.getMessage());
+        } catch (FormatException e) {
+            return failIPM(request.id, "Malformed message");
         }
 
-        InternalProtocolMessage response = new InternalProtocolMessage(
-            request.id, "nfc_status_ok", null, false);
-        return gson.toJson(response);
+        return buildIPM(request.id, "nfc_status_ok", null, false);
     }
 
     private String ndefRecordGetPayload(int instanceId, InternalProtocolMessage request) {
         String uuid = request.args;
         NdefRecord record = ndefRecordMap.get(uuid);
-        byte[] payload = record.getPayload();
+        String payload;
 
-        InternalProtocolMessage response = new InternalProtocolMessage(
-            request.id, "nfc_status_ok", gson.toJson(payload), false);
-        return gson.toJson(response);
+        try {
+            payload = new String(record.getPayload(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return failIPM(request.id, e.toString());
+        }
+
+        return buildIPM(request.id, "nfc_status_ok", gson.toJson(payload), false);
     }
 
     private String runAction(int instanceId, String requestJson) {
@@ -388,8 +407,8 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
 
         if (response == null) {
-            response = gson.toJson(new InternalProtocolMessage(
-                request.id, "nfc_invalid_action", request.content, false));
+            response = buildIPM(
+                request.id, "nfc_invalid_action", request.content, false);
         }
 
         return response;

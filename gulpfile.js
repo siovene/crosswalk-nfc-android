@@ -18,7 +18,7 @@ var gulp = require('gulp'),
     minimist = require('minimist'),
 
     // Keep in sync with xwalk-nfc-extension-src/build.xml.
-    crosswalkVersion = "10.38.221.0",
+    crosswalkVersion = "10.39.235.3",
 
     argv = minimist(process.argv.slice(2)),
 

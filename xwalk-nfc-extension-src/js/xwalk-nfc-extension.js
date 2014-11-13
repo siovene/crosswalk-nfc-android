@@ -102,6 +102,11 @@
         this.uri = uri;
     }
 
+    function NDEFRecordMedia(type, content, _uuid) {
+        NDEFRecord.call(this, 2, type, null, _uuid);
+
+        this.content = content;
+    }
 
     function NDEFMessage(records, _uuid) {
         this.records = records;
@@ -160,6 +165,10 @@
                                     tag._uuid
                                 );
                             }
+                            break;
+
+                        case 2:
+                            record = new NDEFRecordMedia(recordJson.type, recordJson.content, tag._uuid);
                             break;
                         }
 
@@ -334,6 +343,7 @@
     exports.NDEFRecord = NDEFRecord;
     exports.NDEFRecordText = NDEFRecordText;
     exports.NDEFRecordURI = NDEFRecordURI;
+    exports.NDEFRecordMedia = NDEFRecordMedia;
     exports.NDEFMessage = NDEFMessage;
     exports.NDEFMessageEvent = NDEFMessageEvent;
     exports.NFCTag = NFCTag;
@@ -347,6 +357,7 @@
     navigator.nfc.NDEFRecord = NDEFRecord;
     navigator.nfc.NDEFRecordText = NDEFRecordText;
     navigator.nfc.NDEFRecordURI = NDEFRecordURI;
+    navigator.nfc.NDEFRecordMedia = NDEFRecordMedia;
     navigator.nfc.NDEFMessage = NDEFMessage;
     navigator.nfc.NDEFMessageEvent = NDEFMessageEvent;
     navigator.nfc.NFCTag = NFCTag;

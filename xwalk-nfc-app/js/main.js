@@ -13,6 +13,16 @@
     var manager = navigator.nfc,
         currentTag = null;
 
+    function isImage(type) {
+        var t = type.toLowerCase();
+        return (
+            t === 'image/jpg' ||
+            t === 'image/jpeg' ||
+            t === 'image/png' ||
+            t === 'image/gif'
+        );
+    }
+
     // Event handlers
 
     function onpoweron() {
@@ -35,11 +45,13 @@
             document.getElementById("type").textContent = record.type;
 
             switch (record.tnf) {
+            // Empty
             case 0:
                 /*global console */
                 console.log("Empty record");
                 break;
 
+            // Well-known
             case 1:
                 if (record.type.toLowerCase() === 't') {
                     document.getElementById('type-text').className = 'show';
@@ -51,10 +63,25 @@
                     document.getElementById('uri').textContent = record.uri;
                 }
                 break;
+
+            // Media-type
+            case 2:
+                if (isImage(record.type)) {
+                    document.getElementById('type-image').className = 'show';
+                }
+                break;
             }
 
             record.getPayload().then(function (payload) {
+                var encoded;
+
                 document.getElementById("payload").textContent = payload;
+                encoded = win.btoa(payload);
+
+                if (isImage(record.type)) {
+                    document.getElementById('image').src =
+                        'data:' + record.type + ';base64,' + encoded;
+                }
             });
         });
 
@@ -90,24 +117,39 @@
 
         document.getElementById('type-uri').className = 'hide';
         document.getElementById('uri').textContent = '...';
+
+        document.getElementById('type-image').className = 'hide';
+        document.getElementById('image').src = '';
+    }
+
+    function writeTag(record) {
+        var message = new navigator.nfc.NDEFMessage([record], currentTag._uuid);
+        currentTag.writeNDEF(message).then(function () {
+            reset();
+        });
     }
 
     function writeFormSubmit() {
         var type = document.getElementsByName('write-form-type')[0].value,
             content = document.getElementsByName('write-form-content')[0].value,
-            record,
-            message;
+            media = document.getElementsByName('write-form-content-file')[0].files[0],
+            reader;
 
         if (type === "Text") {
-            record = new navigator.nfc.NDEFRecordText(content, "en-US", "UTF-8");
+            writeTag(new navigator.nfc.NDEFRecordText(content, "en-US", "UTF-8"));
         } else if (type === "URI") {
-            record = new navigator.nfc.NDEFRecordURI(content);
-        }
+            writeTag(new navigator.nfc.NDEFRecordURI(content));
+        } else if (type === "File") {
+            /*global FileReader */
+            reader = new FileReader();
+            reader.onload = function (e) {
+                /*global Uint8Array */
+                var s = String.fromCharCode.apply(null, new Uint8Array(e.target.result));
+                writeTag(new navigator.nfc.NDEFRecordMedia(media.type, s));
+            };
 
-        message = new navigator.nfc.NDEFMessage([record], currentTag._uuid);
-        currentTag.writeNDEF(message).then(function () {
-            reset();
-        });
+            reader.readAsArrayBuffer(media);
+        }
 
         return false;
     }
