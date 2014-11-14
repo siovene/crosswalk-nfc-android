@@ -149,6 +149,8 @@
             };
 
             reader.readAsArrayBuffer(media);
+        } else if (type === "External") {
+            writeTag(new navigator.nfc.NDEFRecordExternal('android.com.pkg', content));
         }
 
         return false;

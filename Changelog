@@ -1,3 +1,7 @@
+2014-11-14 Salvatore Iovene <salvatore.iovene@intel.com>
+	* Bump version to 0.7.0.
+	* Add support for External records.
+
 2014-11-13 Salvatore Iovene <salvatore.iovene@intel.com>
 	* Bump version to 0.6.0.
 	* Add support for media records.

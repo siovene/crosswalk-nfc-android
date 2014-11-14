@@ -268,6 +268,10 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 jsonRecord = new NdefMediaRecordIO().read(record).getAsJsonObject();
                 break;
 
+            case NdefRecord.TNF_EXTERNAL_TYPE:
+                jsonRecord = new NdefExternalRecordIO().read(record).getAsJsonObject();
+                break;
+
             default:
                 jsonRecord = new JsonObject();
             };
@@ -315,6 +319,11 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             case NdefRecord.TNF_MIME_MEDIA:
                 record = new NdefMediaRecordIO().write(gson.toJson(jsonRecord));
                 break;
+
+            case NdefRecord.TNF_EXTERNAL_TYPE:
+                record = new NdefExternalRecordIO().write(gson.toJson(jsonRecord));
+                break;
+
             default:
                 return failIPM(request.id, "Invalid type");
             }

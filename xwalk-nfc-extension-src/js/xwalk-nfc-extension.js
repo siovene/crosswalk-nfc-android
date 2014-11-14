@@ -1,4 +1,5 @@
 /*jslint todo: true, nomen: true, plusplus: true */
+/*global console */
 
 (function () {
     'use strict';
@@ -68,7 +69,6 @@
 
                     resolve(payload);
                 } catch (e) {
-                    /*global console */
                     console.error(e);
                     reject(e);
                 }
@@ -106,6 +106,12 @@
         NDEFRecord.call(this, 2, type, null, _uuid);
 
         this.content = content;
+    }
+
+    function NDEFRecordExternal(type, payload, _uuid) {
+        NDEFRecord.call(this, 4, type, null, _uuid);
+
+        this.payload = payload;
     }
 
     function NDEFMessage(records, _uuid) {
@@ -169,6 +175,10 @@
 
                         case 2:
                             record = new NDEFRecordMedia(recordJson.type, recordJson.content, tag._uuid);
+                            break;
+
+                        case 4:
+                            record = new NDEFRecordExternal(recordJson.type, recordJson.payload, tag._uuid);
                             break;
                         }
 
@@ -344,6 +354,7 @@
     exports.NDEFRecordText = NDEFRecordText;
     exports.NDEFRecordURI = NDEFRecordURI;
     exports.NDEFRecordMedia = NDEFRecordMedia;
+    exports.NDEFRecordExternal = NDEFRecordExternal;
     exports.NDEFMessage = NDEFMessage;
     exports.NDEFMessageEvent = NDEFMessageEvent;
     exports.NFCTag = NFCTag;
@@ -358,6 +369,7 @@
     navigator.nfc.NDEFRecordText = NDEFRecordText;
     navigator.nfc.NDEFRecordURI = NDEFRecordURI;
     navigator.nfc.NDEFRecordMedia = NDEFRecordMedia;
+    navigator.nfc.NDEFRecordExternal = NDEFRecordExternal;
     navigator.nfc.NDEFMessage = NDEFMessage;
     navigator.nfc.NDEFMessageEvent = NDEFMessageEvent;
     navigator.nfc.NFCTag = NFCTag;
