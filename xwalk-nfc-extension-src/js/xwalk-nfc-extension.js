@@ -33,15 +33,29 @@
     // Object definitions
     // =============================================================================
 
-        TNF = {
-            0: "Empty",
-            1: "Well-known",
-            2: "Media-type",
-            3: "AbsoluteURI",
-            4: "External",
-            5: "Unknown",
-            6: "Unchanged",
-            7: "Reserved"
+        TNF = [
+            "Empty",
+            "Well-known",
+            "Media-type",
+            "AbsoluteURI",
+            "External",
+            "Unknown",
+            "Unchanged",
+            "Reserved"
+        ],
+
+        utils = {
+            tnfCode: function (s) {
+                var i;
+
+                for (i = 0; i < TNF.length; i++) {
+                    if (TNF[i] === s) {
+                        return i;
+                    }
+                }
+
+                return -1;
+            }
         };
 
 
@@ -78,7 +92,7 @@
 
 
     function NDEFRecordEmpty(id, _uuid) {
-        NDEFRecord.call(this, null, 0, id, _uuid);
+        NDEFRecord.call(this, utils.tnfCode("Empty"), [], id, _uuid);
 
         this.getPayload = function () {
             return new Promise(function (resolve) {
@@ -88,7 +102,7 @@
     }
 
     function NDEFRecordText(text, languageCode, encoding, _uuid) {
-        NDEFRecord.call(this, 1, 'T', null, _uuid);
+        NDEFRecord.call(this, utils.tnfCode("Well-known"), 'T', null, _uuid);
 
         this.text = text;
         this.languageCode = languageCode;
@@ -97,19 +111,19 @@
 
 
     function NDEFRecordURI(uri, _uuid) {
-        NDEFRecord.call(this, 1, 'U', null, _uuid);
+        NDEFRecord.call(this, utils.tnfCode("Well-known"), 'U', null, _uuid);
 
         this.uri = uri;
     }
 
     function NDEFRecordMedia(type, content, _uuid) {
-        NDEFRecord.call(this, 2, type, null, _uuid);
+        NDEFRecord.call(this, utils.tnfCode("Media-type"), type, null, _uuid);
 
         this.content = content;
     }
 
     function NDEFRecordExternal(type, payload, _uuid) {
-        NDEFRecord.call(this, 4, type, null, _uuid);
+        NDEFRecord.call(this, utils.tnfCode("External"), type, null, _uuid);
 
         this.payload = payload;
     }
@@ -153,11 +167,11 @@
                         recordJson = recordsJson[i];
 
                         switch (recordJson.tnf) {
-                        case 0:
+                        case utils.tnfCode("Empty"):
                             record = new NDEFRecordEmpty(recordJson.id, tag._uuid);
                             break;
 
-                        case 1:
+                        case utils.tnfCode("Well-known"):
                             if (recordJson.type.toLowerCase() === 't') {
                                 record = new NDEFRecordText(
                                     recordJson.text,
@@ -173,11 +187,11 @@
                             }
                             break;
 
-                        case 2:
+                        case utils.tnfCode("Media-type"):
                             record = new NDEFRecordMedia(recordJson.type, recordJson.content, tag._uuid);
                             break;
 
-                        case 4:
+                        case utils.tnfCode("External"):
                             record = new NDEFRecordExternal(recordJson.type, recordJson.payload, tag._uuid);
                             break;
                         }
