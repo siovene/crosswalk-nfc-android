@@ -258,18 +258,18 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             case NdefRecord.TNF_WELL_KNOWN:
                 String type = new String(record.getType());
                 if (type.toLowerCase().equals("t")) {
-                    jsonRecord = new NdefTextRecordIO().read(record).getAsJsonObject();
+                    jsonRecord = new NdefRecordIO().read(record, new NdefTextRecordSerializer()).getAsJsonObject();
                 } else if (type.toLowerCase().equals("u")) {
-                    jsonRecord = new NdefURIRecordIO().read(record).getAsJsonObject();
+                    jsonRecord = new NdefRecordIO().read(record, new NdefURIRecordSerializer()).getAsJsonObject();
                 }
                 break;
 
             case NdefRecord.TNF_MIME_MEDIA:
-                jsonRecord = new NdefMediaRecordIO().read(record).getAsJsonObject();
+                jsonRecord = new NdefRecordIO().read(record, new NdefMediaRecordSerializer()).getAsJsonObject();
                 break;
 
             case NdefRecord.TNF_EXTERNAL_TYPE:
-                jsonRecord = new NdefExternalRecordIO().read(record).getAsJsonObject();
+                jsonRecord = new NdefRecordIO().read(record, new NdefExternalRecordSerializer()).getAsJsonObject();
                 break;
 
             default:
@@ -304,24 +304,24 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             case NdefRecord.TNF_WELL_KNOWN:
                 if (type.toLowerCase().equals("t")) {
                     try {
-                        record = new NdefTextRecordIO().write(gson.toJson(jsonRecord));
+                        record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefTextRecordDeserializer());
                     } catch (JsonParseException e) {
                         return failIPM(request.id, "Invalid JSON");
                     }
                 } else if (type.toLowerCase().equals("u")) {
                     try {
-                        record = new NdefURIRecordIO().write(gson.toJson(jsonRecord));
+                        record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefURIRecordDeserializer());
                     } catch (JsonParseException e) {
                         return failIPM(request.id, "Invalid JSON");
                     }
                 }
                 break;
             case NdefRecord.TNF_MIME_MEDIA:
-                record = new NdefMediaRecordIO().write(gson.toJson(jsonRecord));
+                record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefMediaRecordDeserializer());
                 break;
 
             case NdefRecord.TNF_EXTERNAL_TYPE:
-                record = new NdefExternalRecordIO().write(gson.toJson(jsonRecord));
+                record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefExternalRecordDeserializer());
                 break;
 
             default:

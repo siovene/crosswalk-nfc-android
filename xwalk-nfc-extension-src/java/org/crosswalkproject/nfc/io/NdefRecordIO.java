@@ -4,22 +4,25 @@ import android.nfc.NdefRecord;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonSerializer;
 
-public class NdefRecordIO implements INdefRecordIO {
-    // TODO: reuse the following to functions in the subclasses. Too much
-    // duplicated code right now.
-    public JsonElement read(NdefRecord record) {
+public class NdefRecordIO {
+    public JsonElement read(NdefRecord record, JsonSerializer serializer) {
         final GsonBuilder gsonBuilder = new GsonBuilder();
-        gsonBuilder.registerTypeAdapter(NdefRecord.class, new NdefRecordSerializer());
+
+        gsonBuilder.registerTypeAdapter(NdefRecord.class, serializer);
         gsonBuilder.setPrettyPrinting();
         final Gson gson = gsonBuilder.create();
+
         return gson.toJsonTree(record);
     }
 
-    public NdefRecord write(String jsonRecord) {
+    public NdefRecord write(String jsonRecord, JsonDeserializer deserializer) {
         final GsonBuilder gsonBuilder = new GsonBuilder();
-        gsonBuilder.registerTypeAdapter(NdefRecord.class, new NdefRecordDeserializer());
+
+        gsonBuilder.registerTypeAdapter(NdefRecord.class, deserializer);
         final Gson gson = gsonBuilder.create();
         return gson.fromJson(jsonRecord, NdefRecord.class);
     }
