@@ -101,6 +101,7 @@
         };
     }
 
+
     function NDEFRecordText(text, languageCode, encoding, _uuid) {
         NDEFRecord.call(this, utils.tnfCode("Well-known"), 'T', null, _uuid);
 
@@ -116,6 +117,7 @@
         this.uri = uri;
     }
 
+
     function NDEFRecordMedia(type, content, _uuid) {
         NDEFRecord.call(this, utils.tnfCode("Media-type"), type, null, _uuid);
 
@@ -127,6 +129,7 @@
 
         this.payload = payload;
     }
+
 
     function NDEFMessage(records, _uuid) {
         this.records = records;
@@ -388,5 +391,4 @@
     navigator.nfc.NDEFMessageEvent = NDEFMessageEvent;
     navigator.nfc.NFCTag = NFCTag;
     navigator.nfc.NFCTagEvent = NFCTagEvent;
-
 }());
