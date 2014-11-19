@@ -365,19 +365,6 @@
     // Scope assignment
     // =============================================================================
 
-    /*global exports */
-    exports.TNF = TNF;
-    exports.NDEFRecord = NDEFRecord;
-    exports.NDEFRecordText = NDEFRecordText;
-    exports.NDEFRecordURI = NDEFRecordURI;
-    exports.NDEFRecordMedia = NDEFRecordMedia;
-    exports.NDEFRecordExternal = NDEFRecordExternal;
-    exports.NDEFMessage = NDEFMessage;
-    exports.NDEFMessageEvent = NDEFMessageEvent;
-    exports.NFCTag = NFCTag;
-    exports.NFCTagEvent = NFCTagEvent;
-    exports.NFCManager = NFCManager;
-
     /*global navigator */
     navigator.nfc = new NFCManager();
 
