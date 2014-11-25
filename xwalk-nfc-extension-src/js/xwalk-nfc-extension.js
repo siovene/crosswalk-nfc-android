@@ -66,7 +66,7 @@
         this._uuid = _uuid;
 
         if (this._uuid === undefined || this._uuid === null) {
-            this.__uuid = UUID();
+            this._uuid = UUID();
         }
 
         this.getPayload = function () {
@@ -122,6 +122,12 @@
         NDEFRecord.call(this, utils.tnfCode("Media-type"), type, null, _uuid);
 
         this.content = content;
+    }
+
+    function NDEFRecordAbsoluteURI(type, payload, _uuid) {
+        NDEFRecord.call(this, utils.tnfCode("AbsoluteURI"), type, null, _uuid);
+
+        this.payload = payload;
     }
 
     function NDEFRecordExternal(type, payload, _uuid) {
@@ -192,6 +198,10 @@
 
                         case utils.tnfCode("Media-type"):
                             record = new NDEFRecordMedia(recordJson.type, recordJson.content, tag._uuid);
+                            break;
+
+                        case utils.tnfCode("AbsoluteURI"):
+                            record = new NDEFRecordAbsoluteURI(recordJson.type, recordJson.payload, tag._uuid);
                             break;
 
                         case utils.tnfCode("External"):
@@ -373,6 +383,7 @@
     navigator.nfc.NDEFRecordText = NDEFRecordText;
     navigator.nfc.NDEFRecordURI = NDEFRecordURI;
     navigator.nfc.NDEFRecordMedia = NDEFRecordMedia;
+    navigator.nfc.NDEFRecordAbsoluteURI = NDEFRecordAbsoluteURI;
     navigator.nfc.NDEFRecordExternal = NDEFRecordExternal;
     navigator.nfc.NDEFMessage = NDEFMessage;
     navigator.nfc.NDEFMessageEvent = NDEFMessageEvent;

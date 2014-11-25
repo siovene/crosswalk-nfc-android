@@ -268,6 +268,10 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 jsonRecord = new NdefRecordIO().read(record, new NdefMediaRecordSerializer()).getAsJsonObject();
                 break;
 
+            case NdefRecord.TNF_ABSOLUTE_URI:
+                jsonRecord = new NdefRecordIO().read(record, new NdefAbsoluteURIRecordSerializer()).getAsJsonObject();
+                break;
+
             case NdefRecord.TNF_EXTERNAL_TYPE:
                 jsonRecord = new NdefRecordIO().read(record, new NdefExternalRecordSerializer()).getAsJsonObject();
                 break;
@@ -301,6 +305,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             case NdefRecord.TNF_EMPTY:
                 // Skip it
                 break;
+
             case NdefRecord.TNF_WELL_KNOWN:
                 if (type.toLowerCase().equals("t")) {
                     try {
@@ -316,8 +321,13 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                     }
                 }
                 break;
+
             case NdefRecord.TNF_MIME_MEDIA:
                 record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefMediaRecordDeserializer());
+                break;
+
+            case NdefRecord.TNF_ABSOLUTE_URI:
+                record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefAbsoluteURIRecordDeserializer());
                 break;
 
             case NdefRecord.TNF_EXTERNAL_TYPE:

@@ -19,7 +19,15 @@ public class NdefRecordDeserializer implements JsonDeserializer<NdefRecord> {
         JsonObject obj = json.getAsJsonObject();
         short tnf = obj.get("tnf").getAsShort();
         byte[] type = obj.get("type").getAsString().getBytes();
-        byte[] id = obj.get("id").getAsString().getBytes();
+
+        byte[] id;
+
+        try {
+            id = obj.get("id").getAsString().getBytes();
+        } catch (NullPointerException e) {
+            id = null;
+        }
+
         byte[] payload = obj.get("payload").getAsString().getBytes();
 
         final NdefRecord record = new NdefRecord(tnf, type, id, payload);
