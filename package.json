@@ -1,6 +1,6 @@
 {
   "name": "xwalk-nfc-extension",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "An implementation of the W3C NFC API for Crosswalk on Android",
   "author": "Salvatore Iovene <salvatore.iovene@intel.com>",
   "repository": {

@@ -1,3 +1,7 @@
+2014-11-25 Salvatore Iovene <salvatore.iovene@intel.com>
+	* Bump version to 0.8.0.
+	* Add support for Absolute URI records.
+
 2014-11-14 Salvatore Iovene <salvatore.iovene@intel.com>
 	* Bump version to 0.7.0.
 	* Add support for External records.
