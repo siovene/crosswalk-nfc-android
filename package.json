@@ -27,6 +27,11 @@
     "gulp-unzip",
     "gulp-shell",
     "gulp-bump",
-    "gulp-jsonlint"
+    "gulp-jsonlint",
+    "gulp-concat",
+    "gulp-coffee",
+    "gulp-coffeelint",
+    "gulp-sourcemaps",
+    "del"
   ]
 }

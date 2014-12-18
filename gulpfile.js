@@ -5,17 +5,22 @@
 var gulp = require('gulp'),
     gutil = require('gulp-util'),
     debug = require('gulp-debug'),
+    coffeelint = require('gulp-coffeelint'),
     jslint = require('gulp-jslint'),
     jsonlint = require('gulp-jsonlint'),
+    coffee = require('gulp-coffee'),
+    sourcemaps = require('gulp-sourcemaps'),
     download = require('gulp-download'),
     zip = require('gulp-zip'),
     unzip = require('gulp-unzip'),
     shell = require('gulp-shell'),
     bump = require('gulp-bump'),
+    concat = require('gulp-concat'),
 
     path = require('path'),
     fs = require('fs'),
     minimist = require('minimist'),
+    del = require('del'),
 
     // Keep in sync with xwalk-nfc-extension-src/build.xml.
     crosswalkVersion = "10.39.235.3",
@@ -26,11 +31,16 @@ var gulp = require('gulp'),
         extension: 'xwalk-nfc-extension-src',
         tools: 'xwalk-nfc-extension-src/tools',
         xwalk: 'xwalk-nfc-extension-src/lib/crosswalk-' + crosswalkVersion,
-        app: 'xwalk-nfc-app',
+        app: 'xwalk-nfc-christmas-tree',
+        coffee: [
+            'xwalk-nfc-extension-src/coffee/*.coffee'
+        ],
         js: [
             'gulpfile.js',
             'xwalk-nfc-app/js/main.js',
-            'xwalk-nfc-extension-src/js/xwalk-nfc-extension.js'
+            'xwalk-nfc-christmas-tree/js/app.js',
+            'xwalk-nfc-christmas-tree/js/services.js',
+            'xwalk-nfc-christmas-tree/js/controllers.js'
         ],
         json: [
             'package.json',
@@ -51,6 +61,47 @@ gulp.task('jsonlint', function () {
     return gulp.src(paths.json)
         .pipe(jsonlint())
         .pipe(jsonlint.reporter());
+});
+
+gulp.task('coffeelint', function () {
+    gulp.src(paths.coffee)
+        .pipe(coffeelint())
+        .pipe(coffeelint.reporter());
+});
+
+gulp.task('coffee', ['coffeelint'], function () {
+    gulp.src(paths.coffee)
+        .pipe(sourcemaps.init())
+        .pipe(coffee({ bare: true })).on('error', gutil.log)
+        .pipe(sourcemaps.write('maps'))
+        .pipe(gulp.dest(path.join(paths.extension, 'js')));
+});
+
+gulp.task('concat', ['coffee'], function () {
+    var files = [
+        'nfc',
+        'dataobject',
+        'callbacks',
+        'messagedata',
+        'messageevent',
+        'messagetype',
+        'peerregistration',
+        'tagregistration',
+        'tnf',
+        'utils'],
+        dest_dir = path.join(paths.extension, 'js'),
+        dest_name = 'xwalk-nfc-extension.js',
+        dest_file = path.join(dest_dir, dest_name);
+
+    files = files.map(function (name) {
+        return path.join('xwalk-nfc-extension-src', 'js', name) + '.js';
+    });
+
+    del(dest_file);
+
+    return gulp.src(files)
+        .pipe(concat(dest_name))
+        .pipe(gulp.dest(dest_dir));
 });
 
 gulp.task('ivy', function () {
@@ -83,12 +134,12 @@ gulp.task('ivy', function () {
     }
 });
 
-gulp.task('ant', ['ivy', 'jslint', 'jsonlint'], function () {
+gulp.task('ant', ['ivy', 'coffeelint', 'jslint', 'jsonlint'], function () {
     return gulp.src(paths.extension)
         .pipe(shell("ant", { cwd: paths.extension }));
 });
 
-gulp.task('make_apk', ['ant'], function () {
+gulp.task('make_apk', ['concat', 'ant'], function () {
     /*jslint nomen: true */
     var topdir = __dirname;
     /*jslint nomen: false */
@@ -104,13 +155,10 @@ gulp.task('make_apk', ['ant'], function () {
 });
 
 gulp.task('install', ['make_apk'], function () {
-    var config = require('./package.json');
-
     return gulp.src(paths.xwalk)
-        .pipe(shell("adb install -r CrosswalkNfcDemo_<%= version %>_<%= arch %>.apk", {
+        .pipe(shell("adb install -r CrosswalkNfcDemo_<%= arch %>.apk", {
             cwd: paths.xwalk,
             templateData: {
-                version: config.version,
                 arch: argv.arch
             }
         }));
@@ -135,8 +183,8 @@ gulp.task('bump', ['jslint', 'jsonlint'], function () {
 gulp.task('release', ['make_apk'], function () {
     var config = require('./package.json'),
         files = [
-            path.join(paths.xwalk, "CrosswalkNfcDemo_" + config.version + "_arm.apk"),
-            path.join(paths.xwalk, "CrosswalkNfcDemo_" + config.version + "_x86.apk"),
+            path.join(paths.xwalk, "CrosswalkNfcDemo_arm.apk"),
+            path.join(paths.xwalk, "CrosswalkNfcDemo_x86.apk"),
             path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.jar"),
             path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.js"),
             path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.json")

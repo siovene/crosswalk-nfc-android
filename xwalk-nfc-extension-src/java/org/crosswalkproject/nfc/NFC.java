@@ -36,20 +36,6 @@ import com.google.gson.Gson;
 import com.google.gson.*;
 
 public class NFC extends XWalkExtensionClient implements NFCGlobals {
-    private class InternalProtocolMessage {
-        private String id;
-        private String content;
-        private String args;
-        private boolean persistent;
-
-        public InternalProtocolMessage(String id, String content, String args, boolean persistent) {
-            this.id = id;
-            this.content = content;
-            this.args = args;
-            this.persistent = persistent;
-        }
-    }
-
     private class ForegroundDispatcher implements Runnable {
         private volatile NFC nfc;
         private volatile boolean enable;
@@ -104,6 +90,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     private Map<Integer, InternalProtocolMessage> nfcTagDiscoveredSubscribers = new HashMap<Integer, InternalProtocolMessage>();
 
     // Data with UUID
+    private Map<Integer, InternalProtocolMessage> nfcTagRegistrationMap = new HashMap<Integer, InternalProtocolMessage>();
     private Map<String, Tag> nfcTagMap = new HashMap<String, Tag>();
     private Map<String, NdefRecord> ndefRecordMap = new HashMap<String, NdefRecord>();
 
@@ -137,15 +124,6 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     // Internals
     // ------------------------------------------------------------------------
 
-    private String buildIPM(String id, String content, String args, boolean persistent) {
-        InternalProtocolMessage msg = new InternalProtocolMessage(id, content, args, persistent);
-        return gson.toJson(msg);
-    }
-
-    private String failIPM(String id, String msg) {
-        return buildIPM(id, "nfc_status_fail", msg, false);
-    }
-
     private void startDetectingNfcStateChanges() {
         this.androidContext.registerReceiver(
             nfcStateChangeBroadcastReceiver,
@@ -174,22 +152,84 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 Integer instanceId = entry.getKey();
                 InternalProtocolMessage request = entry.getValue();
 
-                postMessage(instanceId, buildIPM(request.id, nfc_state, null, true));
+                postMessage(
+                    instanceId,
+                    InternalProtocolMessage.build(
+                        request.id,
+                        nfc_state,
+                        null,
+                        true).toJson());
             }
         }
     }
 
     private void onTagDiscovered(Tag tag) {
-        for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcTagDiscoveredSubscribers.entrySet()) {
+        Log.d(NFC_DEBUG_TAG, "Tag discovered");
+        Ndef ndef = Ndef.get(tag);
+        NdefMessage message = ndef.getCachedNdefMessage();
+        NdefRecord[] records = message.getRecords();
+
+        for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcTagRegistrationMap.entrySet()) {
             Integer instanceId = entry.getKey();
             InternalProtocolMessage request = entry.getValue();
 
-            String uuid = new String(tag.getId());
-            if (uuid.isEmpty())
-                uuid = UUID.randomUUID().toString();
-            nfcTagMap.put(uuid, tag);
+            TagRegistration registration = gson.fromJson(request.args, TagRegistration.class);
+            MessageEvent messageEvent = new MessageEvent(registration.uuid);
+            messageEvent.messageData = new MessageData[records.length];
 
-            postMessage(instanceId, buildIPM(request.id, "nfc_tag_discovered", uuid, true));
+            for (int i = 0; i < records.length; i++) {
+                messageEvent.messageData[i] = MessageData.fromNdefRecord(records[i]);
+            }
+
+
+            InternalProtocolMessage response =  InternalProtocolMessage.build(
+                    request.id,
+                    "nfc_tag_discovered",
+                    messageEvent.toJson(),
+                    true);
+
+            postMessage(instanceId, response.toJson());
+        }
+    }
+
+    private String runAction(int instance, String request)
+    {
+        InternalProtocolMessage response =
+            new ActionRunner(this).run(instance, request);
+        return gson.toJson(response);
+    }
+
+    @Override
+    public void onMessage(int instanceId, String message)
+    {
+        postMessage(instanceId, this.runAction(instanceId, message));
+    }
+
+    @Override
+    public String onSyncMessage(int instanceId, String message)
+    {
+        return this.runAction(instanceId, message);
+    }
+
+    @Override
+    public void onResume()
+    {
+        this.activity.runOnUiThread(new ForegroundDispatcher(this, true));
+    }
+
+    @Override
+    public void onPause()
+    {
+        this.activity.runOnUiThread(new ForegroundDispatcher(this, false));
+    }
+
+    public void onNewIntent(Intent intent)
+    {
+        // Check to see that the Activity started due to an Android Beam
+        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction()) ||
+            NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+            onTagDiscovered(tag);
         }
     }
 
@@ -198,267 +238,12 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     // API
     // ------------------------------------------------------------------------
 
-    private String powerOnOff(InternalProtocolMessage request) {
-        this.androidContext.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-        return buildIPM(request.id, "nfc_settings_shown", null, false);
-    }
-
-    private String powerState(InternalProtocolMessage request) {
-        boolean enabled = this.nfcAdapter.isEnabled();
-        String responseContent = "off";
-        if(enabled)
-            responseContent = "on";
-
-        return buildIPM(request.id, responseContent, null, false);
-    }
-
-    private String subscribePowerStateChanged(int instanceId, InternalProtocolMessage request) {
-        this.nfcStateChangeSubscribers.put((Integer) instanceId, request);
-        return buildIPM(request.id, "nfc_status_ok", null, false);
-    }
-
-    private String unsubscribePowerStateChanged(int instanceId, InternalProtocolMessage request) {
-        this.nfcStateChangeSubscribers.remove((Integer) instanceId);
-        return buildIPM(request.id, "nfc_status_ok", null, false);
-    }
-
-    private String subscribeTagDiscovered(int instanceId, InternalProtocolMessage request) {
-        this.nfcTagDiscoveredSubscribers.put((Integer) instanceId, request);
-        return buildIPM(request.id, "nfc_status_ok", null, true);
-    }
-
-    private String tagReadNDEF(int instanceId, InternalProtocolMessage request) {
-        String uuid = request.args;
-        Tag tag = nfcTagMap.get(uuid);
-        Ndef ndef = Ndef.get(tag);
-        JsonObject jsonMessage = new JsonObject();
-
-        if (ndef == null) {
-            Log.d(NFC_DEBUG_TAG, "NDEF is not supported by this Tag");
-            return buildIPM(request.id, "nfc_status_error", "nfc_ndef_not_supported", false);
-        }
-
-        NdefMessage message = ndef.getCachedNdefMessage();
-        NdefRecord[] records = message.getRecords();
-        JsonArray jsonRecords = new JsonArray();
-
-        for (int i = 0; i < records.length; i++) {
-            NdefRecord record = records[i];
-            ndefRecordMap.put(uuid, record);
-
-            JsonObject jsonRecord = null;
-
-            // TODO: perform NdefMessage IO.
-            jsonMessage = new JsonObject();
-
-            switch (record.getTnf()) {
-            case NdefRecord.TNF_EMPTY:
-                break;
-
-            case NdefRecord.TNF_WELL_KNOWN:
-                String type = new String(record.getType());
-                if (type.toLowerCase().equals("t")) {
-                    jsonRecord = new NdefRecordIO().read(record, new NdefTextRecordSerializer()).getAsJsonObject();
-                } else if (type.toLowerCase().equals("u")) {
-                    jsonRecord = new NdefRecordIO().read(record, new NdefURIRecordSerializer()).getAsJsonObject();
-                }
-                break;
-
-            case NdefRecord.TNF_MIME_MEDIA:
-                jsonRecord = new NdefRecordIO().read(record, new NdefMediaRecordSerializer()).getAsJsonObject();
-                break;
-
-            case NdefRecord.TNF_ABSOLUTE_URI:
-                jsonRecord = new NdefRecordIO().read(record, new NdefAbsoluteURIRecordSerializer()).getAsJsonObject();
-                break;
-
-            case NdefRecord.TNF_EXTERNAL_TYPE:
-                jsonRecord = new NdefRecordIO().read(record, new NdefExternalRecordSerializer()).getAsJsonObject();
-                break;
-
-            default:
-                jsonRecord = new JsonObject();
-            };
-
-            jsonRecord.addProperty("uuid", uuid);
-            jsonRecords.add(jsonRecord);
-        }
-
-        jsonMessage.add("records", jsonRecords);
-
-        return buildIPM(request.id, "nfc_status_ok", gson.toJson(jsonMessage), false);
-    }
-
-    private String tagWriteNDEF(int instanceId, InternalProtocolMessage request) {
-        JsonParser parser = new JsonParser();
-        JsonElement data = parser.parse(request.args);
-        JsonArray jsonRecords = data.getAsJsonObject().getAsJsonArray("records");
-        NdefRecord[] records = new NdefRecord[jsonRecords.size()];
-
-        for (int i = 0; i < jsonRecords.size(); i++) {
-            JsonObject jsonRecord = jsonRecords.get(i).getAsJsonObject();
-            int tnf = jsonRecord.get("tnf").getAsInt();
-            String type = jsonRecord.get("type").getAsString();
-            NdefRecord record = null;
-
-            switch (tnf) {
-            case NdefRecord.TNF_EMPTY:
-                // Skip it
-                break;
-
-            case NdefRecord.TNF_WELL_KNOWN:
-                if (type.toLowerCase().equals("t")) {
-                    try {
-                        record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefTextRecordDeserializer());
-                    } catch (JsonParseException e) {
-                        return failIPM(request.id, "Invalid JSON");
-                    }
-                } else if (type.toLowerCase().equals("u")) {
-                    try {
-                        record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefURIRecordDeserializer());
-                    } catch (JsonParseException e) {
-                        return failIPM(request.id, "Invalid JSON");
-                    }
-                }
-                break;
-
-            case NdefRecord.TNF_MIME_MEDIA:
-                record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefMediaRecordDeserializer());
-                break;
-
-            case NdefRecord.TNF_ABSOLUTE_URI:
-                record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefAbsoluteURIRecordDeserializer());
-                break;
-
-            case NdefRecord.TNF_EXTERNAL_TYPE:
-                record = new NdefRecordIO().write(gson.toJson(jsonRecord), new NdefExternalRecordDeserializer());
-                break;
-
-            default:
-                return failIPM(request.id, "Invalid type");
-            }
-
-            records[i] = record;
-        }
-
-
-        NdefMessage message = new NdefMessage(records);
-        Tag tag = nfcTagMap.get(data.getAsJsonObject().get("_uuid").getAsString());
-        Ndef ndef = Ndef.get(tag);
-
-        try {
-            ndef.connect();
-            if (ndef.isWritable()) {
-                int size = message.toByteArray().length;
-                if (ndef.getMaxSize() < size) {
-                    return failIPM(
-                        request.id,
-                        "Message content is too large. " +
-                        "Tag capacity: " + ndef.getMaxSize() +
-                        ", message size: " + size);
-                } else {
-                    ndef.writeNdefMessage(message);
-                    ndef.close();
-                }
-            } else {
-                return failIPM(request.id, "Tag is read only");
-            }
-        } catch (TagLostException e) {
-            return failIPM(request.id, "Tag lost");
-        } catch (IOException e) {
-            return failIPM(request.id, "I/O error: " + e.getMessage());
-        } catch (FormatException e) {
-            return failIPM(request.id, "Malformed message");
-        }
-
-        return buildIPM(request.id, "nfc_status_ok", null, false);
-    }
-
-    private String ndefRecordGetPayload(int instanceId, InternalProtocolMessage request) {
-        String uuid = request.args;
-        NdefRecord record = ndefRecordMap.get(uuid);
-        String payload;
-
-        try {
-            payload = new String(record.getPayload(), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return failIPM(request.id, e.toString());
-        }
-
-        return buildIPM(request.id, "nfc_status_ok", gson.toJson(payload), false);
-    }
-
-    private String runAction(int instanceId, String requestJson) {
-        InternalProtocolMessage request = gson.fromJson(requestJson, InternalProtocolMessage.class);
-        String response = null;
-
-        if(request.content.equals("nfc_set_power_on") || request.content.equals("nfc_set_power_off")) {
-            response = this.powerOnOff(request);
-        }
-
-        else if(request.content.equals("nfc_get_power_state")) {
-            response = this.powerState(request);
-        }
-
-        else if(request.content.equals("nfc_subscribe_power_state_changed")) {
-            response = this.subscribePowerStateChanged(instanceId, request);
-        }
-
-        else if(request.content.equals("nfc_unsubscribe_power_state_changed")) {
-            response = this.unsubscribePowerStateChanged(instanceId, request);
-        }
-
-        else if(request.content.equals("nfc_subscribe_tag_discovered")) {
-            response = this.subscribeTagDiscovered(instanceId, request);
-        }
-
-        else if(request.content.equals("nfc_tag_read_ndef")) {
-            response = this.tagReadNDEF(instanceId, request);
-        }
-
-        else if(request.content.equals("nfc_tag_write_ndef")) {
-            response = this.tagWriteNDEF(instanceId, request);
-        }
-
-        else if(request.content.equals("nfc_ndefrecord_get_payload")) {
-            response = this.ndefRecordGetPayload(instanceId, request);
-        }
-
-
-        if (response == null) {
-            response = buildIPM(
-                request.id, "nfc_invalid_action", request.content, false);
-        }
-
-        return response;
-    }
-
-    @Override
-    public void onMessage(int instanceId, String message) {
-        postMessage(instanceId, this.runAction(instanceId, message));
-    }
-
-    @Override
-    public String onSyncMessage(int instanceId, String message) {
-        return this.runAction(instanceId, message);
-    }
-
-    @Override
-    public void onResume() {
-        this.activity.runOnUiThread(new ForegroundDispatcher(this, true));
-    }
-
-    @Override
-    public void onPause() {
-        this.activity.runOnUiThread(new ForegroundDispatcher(this, false));
-    }
-
-    public void onNewIntent(Intent intent) {
-        // Check to see that the Activity started due to an Android Beam
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction()) ||
-            NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
-            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-            onTagDiscovered(tag);
-        }
+    public InternalProtocolMessage nfc_request_tag_registration(
+            int instance, InternalProtocolMessage request)
+    {
+        InternalProtocolMessage ipm = InternalProtocolMessage.ok(
+                request.id, new TagRegistration().toJson());
+        this.nfcTagRegistrationMap.put(instance, ipm);
+        return ipm;
     }
 }

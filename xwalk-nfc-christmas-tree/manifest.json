@@ -1,0 +1,16 @@
+{
+    "name": "Crosswalk NFC Demo",
+    "icons": [
+        {
+            "src": "icon.png",
+            "type": "image/png",
+            "sizes": "96x96"
+        }
+    ],
+    "start_url": "www/index.html",
+    "display": "standalone",
+    "orientation": "any",
+    "xwalk_permissions": [
+        "NFC"
+    ]
+}
