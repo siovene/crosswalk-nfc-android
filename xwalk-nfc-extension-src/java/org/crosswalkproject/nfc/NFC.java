@@ -164,31 +164,35 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     }
 
     private void onTagDiscovered(Tag tag) {
-        Log.d(NFC_DEBUG_TAG, "Tag discovered");
         Ndef ndef = Ndef.get(tag);
         NdefMessage message = ndef.getCachedNdefMessage();
         NdefRecord[] records = message.getRecords();
+        byte[] tagId = tag.getId();
 
         for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcTagRegistrationMap.entrySet()) {
             Integer instanceId = entry.getKey();
             InternalProtocolMessage request = entry.getValue();
 
-            TagRegistration registration = gson.fromJson(request.args, TagRegistration.class);
-            MessageEvent messageEvent = new MessageEvent(registration.uuid);
-            messageEvent.messageData = new MessageData[records.length];
+            TagRegistration registration = TagRegistration.fromJson(request.args);
 
-            for (int i = 0; i < records.length; i++) {
-                messageEvent.messageData[i] = MessageData.fromNdefRecord(records[i]);
+            if (registration.scope == null || registration.scope.equals(tagId)) {
+                MessageEvent messageEvent = new MessageEvent(registration.uuid);
+                messageEvent.scope = registration.scope;
+                messageEvent.messageData = new MessageData[records.length];
+
+                for (int i = 0; i < records.length; i++) {
+                    messageEvent.messageData[i] = MessageData.fromNdefRecord(records[i]);
+                }
+
+
+                InternalProtocolMessage response =  InternalProtocolMessage.build(
+                        request.id,
+                        "nfc_tag_discovered",
+                        messageEvent.toJson(),
+                        true);
+
+                postMessage(instanceId, response.toJson());
             }
-
-
-            InternalProtocolMessage response =  InternalProtocolMessage.build(
-                    request.id,
-                    "nfc_tag_discovered",
-                    messageEvent.toJson(),
-                    true);
-
-            postMessage(instanceId, response.toJson());
         }
     }
 
@@ -241,9 +245,13 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     public InternalProtocolMessage nfc_request_tag_registration(
             int instance, InternalProtocolMessage request)
     {
+        TagRegistration registration = TagRegistration.fromJson(request.args);
         InternalProtocolMessage ipm = InternalProtocolMessage.ok(
-                request.id, new TagRegistration().toJson());
+                request.id,
+                registration.toJson());
+
         this.nfcTagRegistrationMap.put(instance, ipm);
+
         return ipm;
     }
 }

@@ -1,1 +1,17 @@
 /* Empty. Add your own CSS if you like */
+p.full-label {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 32px;
+  line-height: 32px;
+  color: #bbb;
+}
+
+.item .hasMessageEvent {
+  font-weight: bold;
+}
+
+.item a {
+  text-decoration: none;
+  color: inherit;
+}
