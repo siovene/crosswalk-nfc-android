@@ -1,0 +1,36 @@
+<ion-view title="XWalk NFC Demo">
+  <ion-nav-buttons side="left">
+    <button menu-toggle="left" class="button button-icon icon ion-navicon"></button>
+  </ion-nav-buttons>
+
+  <ion-nav-buttons side="right">
+    <button class="button button-icon icon ion-plus" ng-click="showAddTagRegistrationPopup()">
+    </button>
+  </ion-nav-buttons>
+
+  <ion-content class="has-header">
+    <p class="full-label" ng-if="nfc.tagRegistrations.length == 0">
+      There are no tag registrations.
+    </p>
+
+    <div class="list" ng-if="nfc.tagRegistrations.length > 0">
+      <div class="item item-divider">
+        Tag registrations
+      </div>
+
+      <div class="item" ng-repeat="registration in nfc.tagRegistrations">
+        <a href="#" ng-click="tagRegistrationClicked(registration)">
+          <div class="row">
+            <div class="col col-10">{{$index + 1}}.</div>
+            <div class="col" ng-class="{hasMessageEvent: registration.lastMessageEvent}">{{registration.scope || "No scope"}}</div>
+            <div class="col col-10">{{registration.messageEventCount || 0}}</div>
+            <div class="col col-10">
+              <i ng-show="registration.lastMessageEvent" class="icon ion-wifi"></i>
+            </div>
+          </div> <!-- row -->
+        </a>
+      </div> <!-- item -->
+    </div> <!-- list -->
+
+  </ion-content>
+</ion-view>

@@ -28,40 +28,8 @@
     <script src="js/services.js"></script>
     <script src="js/controllers.js"></script>
   </head>
+
   <body ng-app="xwalk-nfc-christmas-tree" ng-controller='AppController'>
-
-    <ion-pane>
-      <ion-header-bar class="bar-stable">
-        <h1 class="title">XWalk NFC Christmas Tree</h1>
-        <div class="buttons">
-          <button class="button" ng-click="showAddTagRegistrationPopup()">
-            <i class="icon ion-plus"></i>
-          </button>
-        </div>
-      </ion-header-bar>
-      <ion-content>
-        <p class="full-label" ng-if="nfc.tagRegistrations.length == 0">
-          There are no tag registrations.
-        </p>
-        <div class="list" ng-if="nfc.tagRegistrations.length > 0">
-          <div class="item item-divider">
-            Tag registrations
-          </div>
-
-          <div class="item" ng-repeat="registration in nfc.tagRegistrations">
-            <a href="#" ng-click="tagRegistrationClicked(registration)">
-              <div class="row">
-                <div class="col col-10">{{$index + 1}}.</div>
-                <div class="col" ng-class="{hasMessageEvent: registration.lastMessageEvent}">{{registration.scope || "No scope"}}</div>
-                <div class="col col-10">{{registration.messageEventCount || 0}}</div>
-                <div class="col col-10">
-                  <i ng-show="registration.lastMessageEvent" class="icon ion-wifi"></i>
-                </div>
-              </div> <!-- row -->
-            </a>
-          </div> <!-- item -->
-        </div> <!-- list -->
-      </ion-content>
-    </ion-pane>
+    <ion-nav-view></ion-nav-view>
   </body>
 </html>
