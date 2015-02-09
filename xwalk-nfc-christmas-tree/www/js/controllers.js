@@ -1,6 +1,6 @@
 angular.module('xwalk-nfc-christmas-tree')
 
-.controller('AppController', function($scope, $ionicPopup, $timeout, NfcService) {
+.controller('AppController', function($scope, $ionicPopup, $timeout, $state, NfcService) {
   $scope.nfc =  NfcService.nfc;
 
   $scope.showAddTagRegistrationPopup = function() {
@@ -44,6 +44,9 @@ angular.module('xwalk-nfc-christmas-tree')
   };
 
   $scope.tagRegistrationClicked = function(registration) {
-    registration.lastMessageEvent = undefined;
+    if (registration.lastMessageEvent !== undefined) {
+      registration.lastMessageEvent = undefined;
+      $state.transitionTo('app.tag');
+    }
   };
 });

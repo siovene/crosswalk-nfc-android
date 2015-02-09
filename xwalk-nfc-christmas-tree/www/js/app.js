@@ -22,6 +22,15 @@ angular.module('xwalk-nfc-christmas-tree', ['ionic'])
     }
   })
 
+  .state('app.tag', {
+    url: '/tag',
+    views: {
+      'menuContent': {
+        templateUrl: 'templates/tag.html'
+      }
+    }
+  })
+
   .state('app.about', {
     url: '/about',
     views: {
