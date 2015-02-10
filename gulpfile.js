@@ -64,13 +64,13 @@ gulp.task('jsonlint', function () {
 });
 
 gulp.task('coffeelint', function () {
-    gulp.src(paths.coffee)
+    return gulp.src(paths.coffee)
         .pipe(coffeelint())
         .pipe(coffeelint.reporter());
 });
 
 gulp.task('coffee', ['coffeelint'], function () {
-    gulp.src(paths.coffee)
+    return gulp.src(paths.coffee)
         .pipe(sourcemaps.init())
         .pipe(coffee({ bare: true })).on('error', gutil.log)
         .pipe(sourcemaps.write('maps'))
@@ -97,8 +97,7 @@ gulp.task('concat', ['coffee'], function () {
         return path.join('xwalk-nfc-extension-src', 'js', name) + '.js';
     });
 
-    del(dest_file);
-
+    del.sync(dest_file);
     return gulp.src(files)
         .pipe(concat(dest_name))
         .pipe(gulp.dest(dest_dir));
@@ -134,7 +133,7 @@ gulp.task('ivy', function () {
     }
 });
 
-gulp.task('ant', ['ivy', 'coffeelint', 'jslint', 'jsonlint'], function () {
+gulp.task('ant', function () {
     return gulp.src(paths.extension)
         .pipe(shell("ant", { cwd: paths.extension }));
 });
@@ -154,7 +153,7 @@ gulp.task('make_apk', ['concat', 'ant'], function () {
         }));
 });
 
-gulp.task('install', ['make_apk'], function () {
+gulp.task('install', ['jsonlint', 'jslint', 'make_apk'], function () {
     return gulp.src(paths.xwalk)
         .pipe(shell("adb install -r CrosswalkNfcDemo_<%= arch %>.apk", {
             cwd: paths.xwalk,
@@ -190,7 +189,7 @@ gulp.task('release', ['make_apk'], function () {
             path.join(paths.extension, "xwalk-nfc-extension", "xwalk-nfc-extension.json")
         ];
 
-    gulp.src(files)
+    return gulp.src(files)
         .pipe(zip('xwalk-nfc-extension-' + config.version + '.zip'))
         .pipe(gulp.dest('releases'));
 });
