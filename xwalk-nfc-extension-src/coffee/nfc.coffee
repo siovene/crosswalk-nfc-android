@@ -16,7 +16,8 @@
 
             if (responseJson.content == "nfc_response_ok")
               registrationJson = JSON.parse responseJson.args
-              registration = new n.nfc.NfcTagRegistration registrationJson.uuid
+              registration = new n.nfc.NfcTagRegistration(
+                registrationJson.scope, registrationJson.uuid)
               n.nfc._internal.tagRegistrations.push(registration)
               resolve registration
             else
