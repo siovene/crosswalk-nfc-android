@@ -90,7 +90,8 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     private Map<Integer, InternalProtocolMessage> nfcTagDiscoveredSubscribers = new HashMap<Integer, InternalProtocolMessage>();
 
     // Data with UUID
-    private Map<Integer, InternalProtocolMessage> nfcTagRegistrationMap = new HashMap<Integer, InternalProtocolMessage>();
+    private NfcAdapterFacade nfcAdapterFacade;
+    private Map<Integer, InternalProtocolMessage> nfcWatches = new HashMap<Integer, InternalProtocolMessage>();
     private Map<String, Tag> nfcTagMap = new HashMap<String, Tag>();
     private Map<String, NdefRecord> ndefRecordMap = new HashMap<String, NdefRecord>();
 
@@ -105,6 +106,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         this.androidContext = this.xwalkContext.getContext();
         this.activity = this.xwalkContext.getActivity();
         this.nfcAdapter = NfcAdapter.getDefaultAdapter(this.androidContext);
+        this.nfcAdapterFacade = new NfcAdapterFacade();
 
         this.nfcStateChangeBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -169,15 +171,15 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         NdefRecord[] records = message.getRecords();
         byte[] tagId = tag.getId();
 
-        for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcTagRegistrationMap.entrySet()) {
+        for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcWatches.entrySet()) {
             Integer instanceId = entry.getKey();
             InternalProtocolMessage request = entry.getValue();
 
-            TagRegistration registration = TagRegistration.fromJson(request.args);
+            Watch w = Watch.fromJson(request.args);
 
-            if (registration.scope == null || registration.scope.equals(tagId)) {
-                MessageEvent messageEvent = new MessageEvent(registration.uuid);
-                messageEvent.scope = registration.scope;
+            if (w.scope == null || w.scope.equals("") || w.scope.equals(tagId)) {
+                MessageEvent messageEvent = new MessageEvent(w.uuid);
+                messageEvent.scope = w.scope;
                 messageEvent.messageData = new MessageData[records.length];
 
                 for (int i = 0; i < records.length; i++) {
@@ -185,7 +187,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
                 }
 
 
-                InternalProtocolMessage response =  InternalProtocolMessage.build(
+                InternalProtocolMessage response = InternalProtocolMessage.build(
                         request.id,
                         "nfc_tag_discovered",
                         messageEvent.toJson(),
@@ -242,16 +244,23 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     // API
     // ------------------------------------------------------------------------
 
-    public InternalProtocolMessage nfc_request_tag_registration(
-            int instance, InternalProtocolMessage request)
+    public InternalProtocolMessage nfc_request_find_adapters(
+        int instance, InternalProtocolMessage request)
     {
-        TagRegistration registration = TagRegistration.fromJson(request.args);
-        InternalProtocolMessage ipm = InternalProtocolMessage.ok(
-                request.id,
-                registration.toJson());
+      NfcAdapterFacade[] adapters = {this.nfcAdapterFacade};
+      InternalProtocolMessage ipm = InternalProtocolMessage.ok(
+          request.id, this.gson.toJson(adapters));
+      return ipm;
+    }
 
-        this.nfcTagRegistrationMap.put(instance, ipm);
-
-        return ipm;
+    public InternalProtocolMessage nfc_request_watch(
+        int instance, InternalProtocolMessage request)
+    {
+      Watch w = Watch.fromJson(request.args);
+      Log.d(NFC_DEBUG_TAG, "Scope: " + w.scope);
+      InternalProtocolMessage ipm = InternalProtocolMessage.ok(
+          request.id, w.toJson());
+      this.nfcWatches.put(instance, request);
+      return ipm;
     }
 }

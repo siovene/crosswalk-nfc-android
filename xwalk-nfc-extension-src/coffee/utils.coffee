@@ -18,7 +18,7 @@
         n.nfc._internal.callbacks.add callback
       message = n.nfc._internal.utils.messageToJson(
         n.nfc._internal.callbacks.nextId, content, args)
-      extension.internal.sendSyncMessage message
+      JSON.parse(extension.internal.sendSyncMessage(message))
 
     uuid: ->
       s4 = ->

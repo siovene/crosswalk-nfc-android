@@ -1,38 +1,4 @@
 ((n) ->
-  n.nfc =
-    NFC:
-      requestTagRegistration: (options = {}) ->
-        new Promise((resolve, reject) ->
-          try
-            callback = (messageEvent) ->
-              uuid = messageEvent.uuid
-              for registration in n.nfc._internal.tagRegistrations
-                if registration.uuid == messageEvent.uuid
-                  registration.onmessage messageEvent
-
-            response = n.nfc._internal.utils.sendMessage(
-              "nfc_request_tag_registration", options, callback)
-            responseJson = JSON.parse response
-
-            if (responseJson.content == "nfc_response_ok")
-              registrationJson = JSON.parse responseJson.args
-              registration = new n.nfc.NfcTagRegistration(
-                registrationJson.scope, registrationJson.uuid)
-              n.nfc._internal.tagRegistrations.push(registration)
-              resolve registration
-            else
-              reject
-          catch e
-            reject e
-        )
-
-      requestPeerRegistration: ->
-
-
-  n.nfc._internal =
-    tagRegistrations: []
-
-
   extension.setMessageListener((message) ->
     messageJson = JSON.parse message
     cb = n.nfc._internal.callbacks.functions[messageJson.id]
@@ -45,4 +11,17 @@
     else
       console.error "Callback not found"
   )
+
+  n.nfc =
+    NFC:
+      findAdapters: ->
+        new Promise((resolve, reject) ->
+          response = n.nfc._internal.utils.sendMessage(
+            "nfc_request_find_adapters")
+          adapters = JSON.parse response.args
+          if response.content == "nfc_response_ok"
+            resolve (new n.nfc.NfcAdapter(x.uuid) for x in adapters)
+          else
+            reject()
+        )
 )(navigator)
