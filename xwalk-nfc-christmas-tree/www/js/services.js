@@ -1,20 +1,27 @@
 angular.module('xwalk-nfc-christmas-tree')
 
-.factory('NfcService', function() {
+.factory('NfcService', function($rootScope) {
   var _data = {
     adapter: null,
     watches: [],
+    readEvents: []
   };
 
   function _init() {
     navigator.nfc.NFC.findAdapters().then(function(adapters) {
       _data.adapter = adapters[0];
+      _data.adapter.onread = function(readEvent) {
+        $rootScope.$apply(function() {
+          readEvent.timestamp = Date.now();
+          _data.readEvents.push(readEvent);
+        });
+      };
     });
   }
 
-  function _watch(scope) {
+  function _watch(scope, onRead) {
     return new Promise(function(resolve, rejec) {
-      var i, w;
+      var i;
 
       if (_data.adapter === null) {
         reject("Adapter not found.");
@@ -30,7 +37,9 @@ angular.module('xwalk-nfc-christmas-tree')
       }
 
       _data.adapter.watch({scope: scope}).then(function(watchId) {
-        _data.watches.push({uuid: watchId, scope: scope});
+        var w = new navigator.nfc.NfcWatch(scope, watchId);
+        w.timestamp = Date.now();
+        _data.watches.push(w);
         resolve(watchId);
       });
     });

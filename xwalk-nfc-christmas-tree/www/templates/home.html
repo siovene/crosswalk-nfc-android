@@ -20,20 +20,25 @@
 
       <div class="item" ng-repeat="w in nfc.watches">
         <a href="#" ng-click="watchClicked(w)">
-          <div class="row">
-            <div class="col col-10">{{$index + 1}}.</div>
-            <div class="col"
-                 ng-class="{hasMessageEvent: nfc.adapter.lastReadEvent}">
-              {{w.scope || "No scope"}}
-            </div>
-            <div class="col col-10">{{w.readEventCount || 0}}</div>
-            <div class="col col-10">
-              <i ng-show="nfc.adapter.lastReadEvent" class="icon ion-wifi"></i>
-            </div>
-          </div> <!-- row -->
+          (<strong>{{w.timestamp | date:'shortTime'}}</strong>) -
+          {{w.scope || "Empty scope"}}
         </a>
       </div> <!-- item -->
     </div> <!-- list -->
+
+    <div class="list" ng-if="nfc.readEvents.length > 0">
+      <div class="item item-divider">
+         Read events
+      </div>
+
+      <div class="item" ng-repeat="e in nfc.readEvents">
+        <a href="#" ng-click="readEventClicked(e)">
+          (<strong>{{e.timestamp | date:'shortTime'}}</strong>) -
+          {{e.data.contentType || "No content type detected"}}
+        </a>
+      </div> <!-- item -->
+    </div> <!-- list -->
+
 
   </ion-content>
 </ion-view>

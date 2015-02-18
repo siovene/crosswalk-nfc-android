@@ -2,7 +2,6 @@ angular.module('xwalk-nfc-christmas-tree')
 
 .controller('AppController', function($scope, $ionicPopup, $timeout, $state, NfcService) {
   $scope.nfc = NfcService.data;
-  $scope.readEvents = [];
 
   $scope.showAddWatchPopup = function() {
     $scope.data = {};
@@ -17,22 +16,6 @@ angular.module('xwalk-nfc-christmas-tree')
           text: '<strong>Watch</strong>',
           type: 'button-positive',
           onTap: function(e) {
-            NfcService.data.adapter.onread = function(readEvent) {
-              $scope.$apply(function() {
-                // Monkey-patch readEvent.
-                readEvent.appPatch = readEvent.appPatch || {};
-                if (readEvent.appPatch.count !== undefined) {
-                  readEvent.appPatch.count += 1;
-                } else {
-                  readEvent.appPatch = 1;
-                }
-
-                // Monkey-patch adapter.
-                NfcService.data.adapter.appPatch = NfcService.data.adapter.appPatch || {};
-                NfcService.data.adapter.appPatch.lastReadEvent = readEvent;
-              });
-            };
-
             NfcService.watch($scope.data.scope);
           }
         }
@@ -40,10 +23,9 @@ angular.module('xwalk-nfc-christmas-tree')
     });
   };
 
-  $scope.watchClicked = function(w) {
-    if (w.lastMessageEvent !== undefined) {
-      w.lastMessageEvent = undefined;
-      $state.transitionTo('app.tag');
-    }
+  $scope.watchClicked = function(watch) {
+  };
+
+  $scope.readEventClicked = function(readEvent) {
   };
 });
