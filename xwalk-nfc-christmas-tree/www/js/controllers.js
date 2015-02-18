@@ -22,10 +22,9 @@ angular.module('xwalk-nfc-christmas-tree')
       ]
     });
   };
+})
 
-  $scope.watchClicked = function(watch) {
-  };
-
-  $scope.readEventClicked = function(readEvent) {
-  };
+.controller('ReadEventController', function($scope, $state, NfcService) {
+  var uuid = $state.params.readEventUuid;
+  $scope.readEvent = NfcService.findReadEventByUuid(uuid);
 });

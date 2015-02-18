@@ -7,13 +7,47 @@ angular.module('xwalk-nfc-christmas-tree')
     readEvents: []
   };
 
+  function _findWatchByScope(scope) {
+    var a = _data.watches.filter(function(watch) {
+      return watch.scope == scope;
+    });
+
+    if (a !== undefined) {
+      a = a[0];
+    }
+
+    return a;
+  }
+
+  function _findReadEventByUuid(uuid) {
+    var a = _data.readEvents.filter(function(readEvent) {
+      return readEvent.uuid == uuid;
+    });
+
+    if (a !== undefined) {
+      a = a[0];
+    }
+
+    return a;
+  }
+
   function _init() {
     navigator.nfc.NFC.findAdapters().then(function(adapters) {
       _data.adapter = adapters[0];
       _data.adapter.onread = function(readEvent) {
         $rootScope.$apply(function() {
+          var watch;
+
           readEvent.timestamp = Date.now();
           _data.readEvents.push(readEvent);
+          watch = _findWatchByScope(readEvent.scope);
+          if (watch !== undefined) {
+            if (watch.readCount !== undefined) {
+              watch.readCount = watch.readCount + 1;
+            } else {
+              watch.readCount = 1;
+            }
+          }
         });
       };
     });
@@ -49,6 +83,7 @@ angular.module('xwalk-nfc-christmas-tree')
 
   return {
     data: _data,
-    watch: _watch
+    watch: _watch,
+    findReadEventByUuid: _findReadEventByUuid
   };
 });

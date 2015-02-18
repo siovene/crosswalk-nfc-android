@@ -19,10 +19,15 @@
       </div>
 
       <div class="item" ng-repeat="w in nfc.watches">
-        <a href="#" ng-click="watchClicked(w)">
-          (<strong>{{w.timestamp | date:'shortTime'}}</strong>) -
-          {{w.scope || "Empty scope"}}
-        </a>
+        <div class="row">
+          <div class="col">
+            (<strong>{{w.timestamp | date:'shortTime'}}</strong>) -
+            {{w.scope || "Empty scope"}}
+          </div>
+          <div class="col col-10">
+            {{w.readCount || 0}}
+          </div>
+        </div>
       </div> <!-- item -->
     </div> <!-- list -->
 
@@ -32,13 +37,11 @@
       </div>
 
       <div class="item" ng-repeat="e in nfc.readEvents">
-        <a href="#" ng-click="readEventClicked(e)">
+        <a href="#/app/readevent/{{e.uuid}}">
           (<strong>{{e.timestamp | date:'shortTime'}}</strong>) -
           {{e.data.contentType || "No content type detected"}}
         </a>
       </div> <!-- item -->
     </div> <!-- list -->
-
-
   </ion-content>
 </ion-view>
