@@ -36,18 +36,8 @@ angular.module('xwalk-nfc-christmas-tree')
       _data.adapter = adapters[0];
       _data.adapter.onread = function(readEvent) {
         $rootScope.$apply(function() {
-          var watch;
-
           readEvent.timestamp = Date.now();
           _data.readEvents.push(readEvent);
-          watch = _findWatchByScope(readEvent.scope);
-          if (watch !== undefined) {
-            if (watch.readCount !== undefined) {
-              watch.readCount = watch.readCount + 1;
-            } else {
-              watch.readCount = 1;
-            }
-          }
         });
       };
     });

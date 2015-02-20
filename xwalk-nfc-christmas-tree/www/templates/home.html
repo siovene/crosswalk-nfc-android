@@ -19,15 +19,8 @@
       </div>
 
       <div class="item" ng-repeat="w in nfc.watches">
-        <div class="row">
-          <div class="col">
-            (<strong>{{w.timestamp | date:'shortTime'}}</strong>) -
-            {{w.scope || "Empty scope"}}
-          </div>
-          <div class="col col-10">
-            {{w.readCount || 0}}
-          </div>
-        </div>
+        (<strong>{{w.timestamp | date:'shortTime'}}</strong>) -
+        {{w.scope || "Empty scope"}}
       </div> <!-- item -->
     </div> <!-- list -->
 
