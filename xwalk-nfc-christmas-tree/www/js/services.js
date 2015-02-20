@@ -54,8 +54,8 @@ angular.module('xwalk-nfc-christmas-tree')
 
       // Prevent watching the same scope multiple times.
       for (i = 0; i < _data.watches.length; i++) {
-        if (watches[i].scope == scope) {
-          resolve(watches[i].uuid);
+        if (_data.watches[i].scope == scope) {
+          resolve(_data.watches[i].uuid);
           return;
         }
       }
