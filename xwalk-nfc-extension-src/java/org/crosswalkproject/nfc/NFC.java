@@ -178,19 +178,18 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
             Watch w = Watch.fromJson(request.args);
 
             if (w.scope == null || w.scope.equals("") || w.scope.equals(tagId)) {
-                MessageEvent messageEvent = new MessageEvent(w.uuid);
-                messageEvent.scope = w.scope;
-                messageEvent.messageData = new MessageData[records.length];
+                ReadEvent readEvent = new ReadEvent(w.uuid);
+                readEvent.scope = w.scope;
+                readEvent.recordData = new RecordData[records.length];
 
                 for (int i = 0; i < records.length; i++) {
-                    messageEvent.messageData[i] = MessageData.fromNdefRecord(records[i]);
+                    readEvent.recordData[i] = new RecordData(records[i]);
                 }
-
 
                 InternalProtocolMessage response = InternalProtocolMessage.build(
                         request.id,
                         "nfc_tag_discovered",
-                        messageEvent.toJson(),
+                        readEvent.toJson(),
                         true);
 
                 postMessage(instanceId, response.toJson());
@@ -257,7 +256,6 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         int instance, InternalProtocolMessage request)
     {
       Watch w = Watch.fromJson(request.args);
-      Log.d(NFC_DEBUG_TAG, "Scope: " + w.scope);
       InternalProtocolMessage ipm = InternalProtocolMessage.ok(
           request.id, w.toJson());
       this.nfcWatches.put(instance, request);
