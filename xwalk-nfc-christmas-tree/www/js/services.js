@@ -52,6 +52,10 @@ angular.module('xwalk-nfc-christmas-tree')
         return;
       }
 
+      if (scope === undefined) {
+        scope = "";
+      }
+
       // Prevent watching the same scope multiple times.
       for (i = 0; i < _data.watches.length; i++) {
         if (_data.watches[i].scope == scope) {
