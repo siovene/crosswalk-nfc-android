@@ -3,6 +3,7 @@
     _internal: {}
 
     constructor: (json) ->
+      @uuid = json.uuid
       @_internal[x] = json[x] for x in ['id', 'payload', 'tnf', 'type']
 
     contentType: ""
