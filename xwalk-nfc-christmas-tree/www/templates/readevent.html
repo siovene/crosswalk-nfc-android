@@ -4,9 +4,9 @@
   </ion-nav-buttons>
 
   <ion-content class="has-header" ng-controller="ReadEventController">
-    <div class="card">
-      <div class="item item-divider">Read event</div>
-      <div class="item">{{readEvent.uuid}}</div>
+    <div class="card" ng-repeat="d in readEvent.data">
+      <div class="item item-divider">Record data</div>
+      <div class="item">Text: {{d.text()}}</div>
     </div> <!-- card -->
   </ion-content>
 </ion-view>

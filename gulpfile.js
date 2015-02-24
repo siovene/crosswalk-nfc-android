@@ -65,7 +65,7 @@ gulp.task('jsonlint', function () {
 
 gulp.task('coffeelint', function () {
     return gulp.src(paths.coffee)
-        .pipe(coffeelint())
+        .pipe(coffeelint('coffeelint.json'))
         .pipe(coffeelint.reporter());
 });
 
@@ -80,6 +80,7 @@ gulp.task('coffee', ['coffeelint'], function () {
 gulp.task('concat', ['coffee'], function () {
     var files = [
         'nfc',
+        'encdec',
         'dataobject',
         'watch',
         'callbacks',
