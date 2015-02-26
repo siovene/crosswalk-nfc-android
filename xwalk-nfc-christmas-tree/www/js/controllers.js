@@ -27,21 +27,4 @@ angular.module('xwalk-nfc-christmas-tree')
 .controller('ReadEventController', function($scope, $state, NfcService) {
   var uuid = $state.params.readEventUuid;
   $scope.readEvent = NfcService.findReadEventByUuid(uuid);
-
-  $scope.asText = function (data) { return data.text(); };
-  $scope.asJson = function (data) {
-    try {
-      return data.json();
-    } catch (e) {
-      return "No JSON in record.";
-    }
-  };
-  $scope.asUrl = function (data) {
-    var url = data.url();
-    if (url === undefined) {
-      url = "No URL in record."
-    }
-
-    return url;
-  };
 });

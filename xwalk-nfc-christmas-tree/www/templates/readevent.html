@@ -6,9 +6,9 @@
   <ion-content class="has-header" ng-controller="ReadEventController">
     <div class="card" ng-repeat="d in readEvent.data">
       <div class="item item-divider">Record data</div>
-      <div class="item"><strong>Text:</strong> {{asText(d)}}</div>
-      <div class="item"><strong>JSON:</strong> {{asJson(d)}}</div>
-      <div class="item"><strong>URL:</strong> {{asUrl(d)}}</div>
+      <div class="item"><strong>Text:</strong> {{d.text() || "Not a text record"}}</div>
+      <div class="item"><strong>JSON:</strong> {{d.json() || "Not a json record"}}</div>
+      <div class="item"><strong>URL:</strong> {{d.url() || "Not a URL record"}}</div>
     </div> <!-- card -->
   </ion-content>
 </ion-view>
