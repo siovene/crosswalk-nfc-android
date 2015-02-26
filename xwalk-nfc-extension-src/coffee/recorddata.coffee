@@ -28,10 +28,6 @@
 
         prefix + n.nfc._internal.EncDec.bytesToString p.slice 1
 
-    arrayBuffer: ->
-
-    blob: ->
-
     json: ->
       try
         JSON.parse @text()
