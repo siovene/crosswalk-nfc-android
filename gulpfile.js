@@ -89,6 +89,7 @@ gulp.task('concat', ['coffee'], function () {
         'messagetype',
         'adapter',
         'tnf',
+        'rtd',
         'utils'],
         dest_dir = path.join(paths.extension, 'js'),
         dest_name = 'xwalk-nfc-extension.js',

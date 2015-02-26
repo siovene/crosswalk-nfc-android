@@ -7,10 +7,34 @@
       @_internal[x] = json[x] for x in ['id', 'payload', 'tnf', 'type']
 
     contentType: ""
+
     url: ->
+      p = @_internal.payload
+      if @_internal.tnf == n.nfc._internal.TNFMap.TNF_WELL_KNOWN &&
+         @_internal.type[0] == n.nfc._internal.RTDMap.RTD_URI[0]
+        protocols = [
+          "http://www.", "https://www.", "http://", "https://", "tel:",
+          "mailto:", "ftp://anonymous:anonymous@", "ftp://ftp.", "ftps://",
+          "sftp://", "smb://", "nfs://", "ftp://", "dav://", "news:",
+          "telnet://", "imap:", "rtsp://", "urn:", "pop:", "sip:", "sips:",
+          "tftp:", "btspp://", "btl2cap://", "btgoep://", "tcpobex://",
+          "irdaobex://", "file://", "urn:epc:id:", "urn:epc:tag:",
+          "urn:epc:pat:", "urn:epc:raw:", "urn:epc:", "urn:nfc:"
+        ]
+
+        prefix = protocols[p[0]]
+        if !prefix
+          prefix = ""
+
+        prefix + n.nfc._internal.EncDec.bytesToString p.slice 1
+
     arrayBuffer: ->
+
     blob: ->
+
     json: ->
+      JSON.parse @text()
+
     text: ->
       p = @_internal.payload
       languageCodeLength = p[0] & 0x1F # 5 bits
