@@ -13,29 +13,31 @@
       There are no watched scopes.
     </p>
 
-    <div class="list" ng-if="nfc.watches.length > 0">
-      <div class="item item-divider">
+    <!-- Watches -->
+    <ion-list ng-if="nfc.watches.length > 0">
+      <ion-item class="tem-divider">
          Scopes watched
-      </div>
+      </ion-item>
 
-      <div class="item" ng-repeat="w in nfc.watches">
+      <ion-item ng-repeat="w in nfc.watches">
         {{w.scope || "Empty scope"}}
         <span class="item-note">{{w.timestamp | date:'shortTime'}}</span>
-      </div> <!-- item -->
-    </div> <!-- list -->
+      </ion-item>
+    </ion-list>
 
-    <div class="list" ng-if="nfc.readEvents.length > 0">
-      <div class="item item-divider">
+    <!-- Read events -->
+    <ion-list ng-if="nfc.readEvents.length > 0">
+      <ion-item "item item-divider">
          Read events
-      </div>
+      </ion-item>
 
-      <div class="item item-icon-right" ng-repeat="e in nfc.readEvents">
-        <a href="#/app/readevent/{{e.uuid}}">
-          {{e.data.contentType || "No content type detected"}}
-          <span class="item-note">{{e.timestamp | date:'shortTime'}}</span>
-          <i class="icon ion-chevron-right"></i>
-        </a>
-      </div> <!-- item -->
-    </div> <!-- list -->
+      <ion-item href="#/app/home/read/event/{{e.uuid}}"
+                class="item-icon-right"
+                ng-repeat="e in nfc.readEvents">
+        {{e.data.contentType || "No content type detected"}}
+        <span class="item-note">{{e.timestamp | date:'shortTime'}}</span>
+        <i class="icon ion-chevron-right"></i>
+      </ion-item>
+    </ion-list>
   </ion-content>
 </ion-view>
