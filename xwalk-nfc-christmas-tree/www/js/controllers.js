@@ -1,6 +1,8 @@
 angular.module('xwalk-nfc-christmas-tree')
 
-.controller('AppController', function($scope, $ionicPopup, $timeout, $state, NfcService) {
+.controller('AppController', function(
+  $scope, $ionicPopup, $timeout, $state, $ionicModal, NfcService)
+{
   $scope.nfc = NfcService.data;
 
   $scope.showAddWatchPopup = function() {
@@ -22,9 +24,28 @@ angular.module('xwalk-nfc-christmas-tree')
       ]
     });
   };
-})
 
-.controller('ReadEventController', function($scope, $state, NfcService) {
-  var uuid = $state.params.uuid;
-  $scope.readEvent = NfcService.findReadEventByUuid(uuid);
-});
+  $ionicModal.fromTemplateUrl('templates/readevent.html', {
+    scope: $scope,
+    animation: 'slide-in-up'
+  }).then(function(modal) {
+    $scope.modal = modal;
+  });
+
+  $scope.showModal = function() {
+    $scope.modal.show();
+  };
+
+  $scope.closeModal = function() {
+    $scope.modal.hide();
+  };
+
+  $scope.showReadEventModal = function(uuid) {
+    $scope.readEvent = NfcService.findReadEventByUuid(uuid);
+    $scope.showModal();
+  };
+
+  $scope.$on('$destroy', function() {
+    $scope.readEventModal.remove();
+  });
+})

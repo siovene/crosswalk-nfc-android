@@ -25,17 +25,8 @@ angular.module('xwalk-nfc-christmas-tree', ['ionic'])
   .state('app.home.read', {
     url: '/read',
     views: {
-      'homeContent': {
+      'readContent': {
         templateUrl: 'templates/read.html'
-      }
-    }
-  })
-
-  .state('app.home.read.event', {
-    url: '/event/:uuid',
-    views: {
-      'homeContent': {
-        templateUrl: 'templates/readevent.html'
       }
     }
   })
@@ -43,7 +34,7 @@ angular.module('xwalk-nfc-christmas-tree', ['ionic'])
   .state('app.home.write', {
     url: '/write',
     views: {
-      'homeContent': {
+      'writeContent': {
         templateUrl: 'templates/write.html'
       }
     }

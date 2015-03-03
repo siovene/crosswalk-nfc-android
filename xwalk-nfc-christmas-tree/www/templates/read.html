@@ -31,7 +31,7 @@
          Read events
       </ion-item>
 
-      <ion-item href="#/app/home/read/event/{{e.uuid}}"
+      <ion-item ng-click="showReadEventModal(e.uuid)"
                 class="item-icon-right"
                 ng-repeat="e in nfc.readEvents">
         {{e.data.contentType || "No content type detected"}}
