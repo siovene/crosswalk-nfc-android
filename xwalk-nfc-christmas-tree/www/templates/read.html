@@ -14,8 +14,8 @@
     </p>
 
     <!-- Watches -->
-    <ion-list ng-if="nfc.watches.length > 0">
-      <ion-item class="tem-divider">
+    <ion-list type="card" ng-if="nfc.watches.length > 0">
+      <ion-item class="item-divider">
          Scopes watched
       </ion-item>
 
@@ -26,8 +26,8 @@
     </ion-list>
 
     <!-- Read events -->
-    <ion-list ng-if="nfc.readEvents.length > 0">
-      <ion-item "item item-divider">
+    <ion-list type="card" ng-if="nfc.readEvents.length > 0">
+      <ion-item class="item-divider">
          Read events
       </ion-item>
 
