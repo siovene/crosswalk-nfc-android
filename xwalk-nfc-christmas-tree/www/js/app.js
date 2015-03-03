@@ -9,8 +9,7 @@ angular.module('xwalk-nfc-christmas-tree', ['ionic'])
   $stateProvider.state('app', {
     url: '/app',
     abstract: true,
-    templateUrl: 'templates/menu.html',
-    controller: 'AppController'
+    templateUrl: 'templates/menu.html'
   })
 
   .state('app.home', {
@@ -26,7 +25,8 @@ angular.module('xwalk-nfc-christmas-tree', ['ionic'])
     url: '/read',
     views: {
       'readContent': {
-        templateUrl: 'templates/read.html'
+        templateUrl: 'templates/read.html',
+        controller: 'ReadController'
       }
     }
   })
@@ -35,7 +35,8 @@ angular.module('xwalk-nfc-christmas-tree', ['ionic'])
     url: '/write',
     views: {
       'writeContent': {
-        templateUrl: 'templates/write.html'
+        templateUrl: 'templates/write.html',
+        controller: 'WriteController'
       }
     }
   })

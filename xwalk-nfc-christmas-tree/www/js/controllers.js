@@ -1,6 +1,6 @@
 angular.module('xwalk-nfc-christmas-tree')
 
-.controller('AppController', function(
+.controller('ReadController', function(
   $scope, $ionicPopup, $timeout, $state, $ionicModal, NfcService)
 {
   $scope.nfc = NfcService.data;
@@ -49,3 +49,10 @@ angular.module('xwalk-nfc-christmas-tree')
     $scope.readEventModal.remove();
   });
 })
+
+.controller('WriteController', function($scope) {
+  $scope.records = [];
+
+  $scope.showRecordTypePopup = function() {
+  };
+});
