@@ -1,0 +1,33 @@
+<div class="modal">
+  <ion-header-bar>
+    <h1 class="title">Add record</h1>
+  </ion-header-bar>
+
+  <ion-content class="has-header">
+
+    <div class="list">
+      <label class="item item-input item-select">
+        <div class="input-label">
+          Record type
+        </div>
+        <select ng-model="recordBeingAdded.type">
+          <option value"text" ng-selected="recordBeingAdded.type == 'text'">Text</option>
+          <option value="json" ng-selected="recordBeingAdded.type == 'json'">JSON</option>
+          <option value="uri" ng-selected="recordBeingAdded.type == 'uri'">URI</option>
+        </select>
+      </label>
+
+      <label class="item item-input item-floating-label">
+        <span class="input-label">Content</span>
+        <input type="text" ng-model="recordBeingAdded.content" placeholder="Content">
+      </label>
+    </div>
+
+    <button class="button button-positive button-block" ng-click="addRecord()">
+      Add record
+    </button>
+    <button class="button button-block" ng-click="closeModal()">
+      Cancel
+    </button>
+  </ion-content>
+</ion-view>

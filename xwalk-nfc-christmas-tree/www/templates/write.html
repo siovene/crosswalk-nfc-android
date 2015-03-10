@@ -1,0 +1,52 @@
+<ion-view title="XWalk NFC Demo">
+  <ion-nav-buttons side="left">
+    <button menu-toggle="left" class="button button-icon icon ion-navicon"></button>
+  </ion-nav-buttons>
+
+  <ion-nav-buttons side="right">
+    <button
+      class="button button-icon icon ion-plus"
+      ng-click="showAddRecordModal()">
+    </button>
+  </ion-nav-buttons>
+
+  <ion-content class="has-header">
+    <p class="full-label" ng-if="records.length === 0">
+      There are no records. Add some.
+    </p>
+
+    <ion-list type="card" ng-if="records.length > 0">
+      <ion-item class="item-divider">
+        <ng-pluralize
+          count="records.length"
+          when="
+            {
+              'one': 'One record will be written.',
+              'other': '{} records will be written.'
+            }">
+        </ng-pluralize>
+      </ion-item>
+      <ion-item class="item-button-right" ng-repeat="record in records">
+        <h2>{{record.type}}</h2>
+        <p>{{record.content || "No content."}}</p>
+
+        <button
+          class="button button-clear icon ion-trash-b"
+          ng-click="removeRecord(record)">
+        </button>
+      </ion-item>
+    </ion-list>
+
+    <button
+      class="button button-block button-positive"
+      ng-click="writeTag(records)">
+      Write tag
+    </button>
+
+    <button
+      class="button button-block button-assertive"
+      ng-click="writeTag([])">
+      Erase tag
+    </button>
+  </ion-content>
+</ion-view>

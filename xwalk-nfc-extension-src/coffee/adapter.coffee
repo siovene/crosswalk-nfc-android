@@ -26,6 +26,11 @@
     clearWatch: (uuid) ->
 
     write: (data, scope = "") ->
+      new Promise((resolve, reject) ->
+        response = n.nfc._internal.utils.sendMessage(
+          "nfc_request_write")
+        console.log response
+      )
 
     setPushMessage: (data, scope = "") ->
 

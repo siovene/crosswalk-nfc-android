@@ -45,10 +45,16 @@ angular.module('xwalk-nfc-christmas-tree')
     });
   }
 
+  function _write(data, scope) {
+    return _data.adapter.write(data, scope);
+  }
+
   _init();
 
   return {
     data: _data,
-    watch: _watch
+    watch: _watch,
+    write: _write,
+    findReadEventByUuid: _findReadEventByUuid
   };
 });

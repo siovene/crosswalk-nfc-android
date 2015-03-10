@@ -263,4 +263,11 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
       this.nfcWatches.put(instance, request);
       return ipm;
     }
+
+    public InternalProtocolMessage nfc_request_write(
+        int instance, InternalProtocolMessage request)
+    {
+        Log.d(NFC_DEBUG_TAG, request.args);
+        return null;
+    }
 }
