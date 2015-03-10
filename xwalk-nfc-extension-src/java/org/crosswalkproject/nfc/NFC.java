@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -91,10 +92,11 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
     // Data with UUID
     private NfcAdapterFacade nfcAdapterFacade;
-    private Map<Integer, InternalProtocolMessage> nfcWatches = new HashMap<Integer, InternalProtocolMessage>();
-    private Map<String, Tag> nfcTagMap = new HashMap<String, Tag>();
+    private Map<Integer, ArrayList<InternalProtocolMessage>> nfcWatches = new HashMap<Integer, ArrayList<InternalProtocolMessage>>();
     private Map<String, NdefRecord> ndefRecordMap = new HashMap<String, NdefRecord>();
 
+    // At the moment we simply deal with one tag at a time
+    private Tag lastSeenTag = null;
 
     // the constructor should have this signature so that Crosswalk
     // can instantiate the extension
@@ -171,29 +173,34 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         NdefRecord[] records = message.getRecords();
         byte[] tagId = tag.getId();
 
-        for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcWatches.entrySet()) {
+        for (Map.Entry<Integer, ArrayList<InternalProtocolMessage>> entry : this.nfcWatches.entrySet()) {
             Integer instanceId = entry.getKey();
-            InternalProtocolMessage request = entry.getValue();
+            ArrayList <InternalProtocolMessage> instanceMessages = entry.getValue();
+            Iterator <InternalProtocolMessage> it = instanceMessages.iterator();
 
-            Watch w = Watch.fromJson(request.args);
+            while(it.hasNext()) {
+                InternalProtocolMessage request = it.next();
 
-            if (w.scope == null || w.scope.equals("") || w.scope.equals(tagId)) {
-                MessageEvent messageEvent = new MessageEvent(w.uuid);
-                messageEvent.scope = w.scope;
-                messageEvent.messageData = new MessageData[records.length];
+                Watch w = Watch.fromJson(request.args);
 
-                for (int i = 0; i < records.length; i++) {
-                    messageEvent.messageData[i] = MessageData.fromNdefRecord(records[i]);
+                if (w.scope == null || w.scope.equals("") || w.scope.equals(tagId)) {
+                    ReadEvent readEvent = new ReadEvent(w.uuid);
+                    readEvent.scope = w.scope;
+                    readEvent.recordData = new RecordData[records.length];
+
+                    for (int i = 0; i < records.length; i++) {
+                        readEvent.recordData[i] = new RecordData(records[i]);
+                    }
+
+                    InternalProtocolMessage response = InternalProtocolMessage.build(
+                            request.id,
+                            "nfc_tag_discovered",
+                            readEvent.toJson(),
+                            true);
+
+                    this.lastSeenTag = tag;
+                    postMessage(instanceId, response.toJson());
                 }
-
-
-                InternalProtocolMessage response = InternalProtocolMessage.build(
-                        request.id,
-                        "nfc_tag_discovered",
-                        messageEvent.toJson(),
-                        true);
-
-                postMessage(instanceId, response.toJson());
             }
         }
     }
@@ -247,27 +254,113 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     public InternalProtocolMessage nfc_request_find_adapters(
         int instance, InternalProtocolMessage request)
     {
-      NfcAdapterFacade[] adapters = {this.nfcAdapterFacade};
-      InternalProtocolMessage ipm = InternalProtocolMessage.ok(
-          request.id, this.gson.toJson(adapters));
-      return ipm;
+        NfcAdapterFacade[] adapters = {this.nfcAdapterFacade};
+        InternalProtocolMessage ipm = InternalProtocolMessage.ok(
+                request.id, this.gson.toJson(adapters));
+        return ipm;
     }
 
     public InternalProtocolMessage nfc_request_watch(
         int instance, InternalProtocolMessage request)
     {
-      Watch w = Watch.fromJson(request.args);
-      Log.d(NFC_DEBUG_TAG, "Scope: " + w.scope);
-      InternalProtocolMessage ipm = InternalProtocolMessage.ok(
-          request.id, w.toJson());
-      this.nfcWatches.put(instance, request);
-      return ipm;
+        Watch watchFromRequest = Watch.fromJson(request.args);
+
+        // Only allow one watch per scope, from the same instance.
+        ArrayList<InternalProtocolMessage> instanceMessages;
+
+        instanceMessages = nfcWatches.get(instance);
+        if (instanceMessages != null) {
+            Iterator <InternalProtocolMessage> it = instanceMessages.iterator();
+            while(it.hasNext()) {
+                InternalProtocolMessage ipm = it.next();
+                Watch w = Watch.fromJson(ipm.args);
+                if (w.scope.equals(watchFromRequest.scope)) {
+                    return InternalProtocolMessage.ok(request.id, w.toJson());
+                }
+            }
+        } else {
+            instanceMessages = new ArrayList<InternalProtocolMessage>();
+            this.nfcWatches.put(instance, instanceMessages);
+        }
+
+
+        InternalProtocolMessage ipm = InternalProtocolMessage.ok(
+                request.id, watchFromRequest.toJson());
+        instanceMessages.add(request);
+        return ipm;
     }
 
     public InternalProtocolMessage nfc_request_write(
         int instance, InternalProtocolMessage request)
     {
-        Log.d(NFC_DEBUG_TAG, request.args);
-        return null;
+        if (this.lastSeenTag == null) {
+            Log.d(NFC_DEBUG_TAG, "We never saw a tag...");
+            return InternalProtocolMessage.fail(request.id, "nfc_response_tag_lost");
+        }
+
+        JsonParser parser = new JsonParser();
+        JsonElement data = parser.parse(request.args);
+        JsonArray jsonRecords = data.getAsJsonObject().getAsJsonArray("records");
+        NdefRecord[] records = new NdefRecord[jsonRecords.size()];
+
+        for (int i=0; i < jsonRecords.size(); i++) {
+            Log.d(NFC_DEBUG_TAG, "Creating record...");
+            JsonObject jsonRecord = jsonRecords.get(i).getAsJsonObject();
+            String type = jsonRecord.get("type").getAsString();
+            String content = jsonRecord.get("content").getAsString();
+            String payload = jsonRecord.get("encodedPayload").getAsString();
+            NdefRecord record = null;
+
+            Log.d(NFC_DEBUG_TAG, "Type: " + type);
+            Log.d(NFC_DEBUG_TAG, "Content: " + content);
+            Log.d(NFC_DEBUG_TAG, "Payload: " + payload);
+
+            if (type.equals("text")) {
+                record = new NdefRecord(
+                    NdefRecord.TNF_WELL_KNOWN,
+                    NdefRecord.RTD_TEXT,
+                    new byte[0], // TODO: scope
+                    payload.getBytes());
+            }
+
+            records[i] = record;
+        }
+
+        if (jsonRecords.size() == 0) {
+            Log.d(NFC_DEBUG_TAG, "Creating empty record set...");
+            records = new NdefRecord[] {
+                new NdefRecord(NdefRecord.TNF_EMPTY, null, null, null)
+            };
+        }
+
+        Log.d(NFC_DEBUG_TAG, "Creating message...");
+        NdefMessage message = new NdefMessage(records);
+        Ndef ndef = Ndef.get(this.lastSeenTag);
+
+        try {
+            Log.d(NFC_DEBUG_TAG, "Connecting to ndef...");
+            ndef.connect();
+            if (ndef.isWritable()) {
+                int size = message.toByteArray().length;
+                if (ndef.getMaxSize() < size) {
+                    return InternalProtocolMessage.fail(
+                        request.id, "nfc_response_message_too_large");
+                } else {
+                    ndef.writeNdefMessage(message);
+                    ndef.close();
+                }
+            } else {
+                return InternalProtocolMessage.fail(
+                    request.id, "nfc_response_tag_write_protected");
+            }
+        } catch (TagLostException e) {
+            return InternalProtocolMessage.fail(request.id, "nfc_response_tag_lost");
+        } catch (IOException e) {
+            return InternalProtocolMessage.fail(request.id, "nfc_response_io_error");
+        } catch (FormatException e) {
+            return InternalProtocolMessage.fail(request.id, "nfc_response_malformed");
+        }
+
+        return InternalProtocolMessage.ok(request.id, null);
     }
 }

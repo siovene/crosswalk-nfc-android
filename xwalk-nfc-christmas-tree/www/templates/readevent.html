@@ -1,0 +1,18 @@
+<div class="modal">
+  <ion-header-bar>
+    <h1 class="title">Read event</h1>
+  </ion-header-bar>
+
+  <ion-content class="has-header">
+    <div class="card" ng-repeat="d in readEvent.data">
+      <div class="item item-divider">Record data</div>
+      <div class="item"><strong>Text:</strong> {{d.text() || "Not a text record"}}</div>
+      <div class="item"><strong>JSON:</strong> {{d.json() || "Not a json record"}}</div>
+      <div class="item"><strong>URL:</strong> {{d.url() || "Not a URL record"}}</div>
+    </div> <!-- card -->
+
+    <button class="button button-full button-energized" ng-click="closeModal()">
+      Close
+    </button>
+  </ion-content>
+</ion-view>
