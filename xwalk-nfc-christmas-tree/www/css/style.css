@@ -1,4 +1,7 @@
-/* Empty. Add your own CSS if you like */
+.scroll-content {
+  padding: 10px 15px;
+}
+
 p.full-label {
   text-align: center;
   margin: 25px 0;

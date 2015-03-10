@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -91,7 +92,7 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
 
     // Data with UUID
     private NfcAdapterFacade nfcAdapterFacade;
-    private Map<Integer, InternalProtocolMessage> nfcWatches = new HashMap<Integer, InternalProtocolMessage>();
+    private Map<Integer, ArrayList<InternalProtocolMessage>> nfcWatches = new HashMap<Integer, ArrayList<InternalProtocolMessage>>();
     private Map<String, Tag> nfcTagMap = new HashMap<String, Tag>();
     private Map<String, NdefRecord> ndefRecordMap = new HashMap<String, NdefRecord>();
 
@@ -171,29 +172,33 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
         NdefRecord[] records = message.getRecords();
         byte[] tagId = tag.getId();
 
-        for (Map.Entry<Integer, InternalProtocolMessage> entry : this.nfcWatches.entrySet()) {
+        for (Map.Entry<Integer, ArrayList<InternalProtocolMessage>> entry : this.nfcWatches.entrySet()) {
             Integer instanceId = entry.getKey();
-            InternalProtocolMessage request = entry.getValue();
+            ArrayList <InternalProtocolMessage> instanceMessages = entry.getValue();
+            Iterator <InternalProtocolMessage> it = instanceMessages.iterator();
 
-            Watch w = Watch.fromJson(request.args);
+            while(it.hasNext()) {
+                InternalProtocolMessage request = it.next();
 
-            if (w.scope == null || w.scope.equals("") || w.scope.equals(tagId)) {
-                MessageEvent messageEvent = new MessageEvent(w.uuid);
-                messageEvent.scope = w.scope;
-                messageEvent.messageData = new MessageData[records.length];
+                Watch w = Watch.fromJson(request.args);
 
-                for (int i = 0; i < records.length; i++) {
-                    messageEvent.messageData[i] = MessageData.fromNdefRecord(records[i]);
+                if (w.scope == null || w.scope.equals("") || w.scope.equals(tagId)) {
+                    ReadEvent readEvent = new ReadEvent(w.uuid);
+                    readEvent.scope = w.scope;
+                    readEvent.recordData = new RecordData[records.length];
+
+                    for (int i = 0; i < records.length; i++) {
+                        readEvent.recordData[i] = new RecordData(records[i]);
+                    }
+
+                    InternalProtocolMessage response = InternalProtocolMessage.build(
+                            request.id,
+                            "nfc_tag_discovered",
+                            readEvent.toJson(),
+                            true);
+
+                    postMessage(instanceId, response.toJson());
                 }
-
-
-                InternalProtocolMessage response = InternalProtocolMessage.build(
-                        request.id,
-                        "nfc_tag_discovered",
-                        messageEvent.toJson(),
-                        true);
-
-                postMessage(instanceId, response.toJson());
             }
         }
     }
@@ -247,21 +252,40 @@ public class NFC extends XWalkExtensionClient implements NFCGlobals {
     public InternalProtocolMessage nfc_request_find_adapters(
         int instance, InternalProtocolMessage request)
     {
-      NfcAdapterFacade[] adapters = {this.nfcAdapterFacade};
-      InternalProtocolMessage ipm = InternalProtocolMessage.ok(
-          request.id, this.gson.toJson(adapters));
-      return ipm;
+        NfcAdapterFacade[] adapters = {this.nfcAdapterFacade};
+        InternalProtocolMessage ipm = InternalProtocolMessage.ok(
+                request.id, this.gson.toJson(adapters));
+        return ipm;
     }
 
     public InternalProtocolMessage nfc_request_watch(
         int instance, InternalProtocolMessage request)
     {
-      Watch w = Watch.fromJson(request.args);
-      Log.d(NFC_DEBUG_TAG, "Scope: " + w.scope);
-      InternalProtocolMessage ipm = InternalProtocolMessage.ok(
-          request.id, w.toJson());
-      this.nfcWatches.put(instance, request);
-      return ipm;
+        Watch watchFromRequest = Watch.fromJson(request.args);
+
+        // Only allow one watch per scope, from the same instance.
+        ArrayList<InternalProtocolMessage> instanceMessages;
+
+        instanceMessages = nfcWatches.get(instance);
+        if (instanceMessages != null) {
+            Iterator <InternalProtocolMessage> it = instanceMessages.iterator();
+            while(it.hasNext()) {
+                InternalProtocolMessage ipm = it.next();
+                Watch w = Watch.fromJson(ipm.args);
+                if (w.scope.equals(watchFromRequest.scope)) {
+                    return InternalProtocolMessage.ok(request.id, w.toJson());
+                }
+            }
+        } else {
+            instanceMessages = new ArrayList<InternalProtocolMessage>();
+            this.nfcWatches.put(instance, instanceMessages);
+        }
+
+
+        InternalProtocolMessage ipm = InternalProtocolMessage.ok(
+                request.id, watchFromRequest.toJson());
+        instanceMessages.add(request);
+        return ipm;
     }
 
     public InternalProtocolMessage nfc_request_write(
