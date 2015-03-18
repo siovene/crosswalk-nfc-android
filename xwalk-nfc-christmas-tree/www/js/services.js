@@ -64,6 +64,7 @@ angular.module('xwalk-nfc-christmas-tree')
         }
       }
 
+      _data.adapter.onread = onRead;
       _data.adapter.watch({scope: scope}).then(function(watchId) {
         var w = new navigator.nfc.NfcWatch(scope, watchId);
         w.timestamp = Date.now();

@@ -50,7 +50,7 @@ angular.module('xwalk-nfc-christmas-tree')
   });
 })
 
-.controller('WriteController', function($scope, $ionicModal, NfcService) {
+.controller('WriteController', function($scope, $ionicModal, $ionicPopup, NfcService) {
   $scope.records = [];
   $scope.recordBeingAdded = {
     type: "text",
@@ -97,7 +97,28 @@ angular.module('xwalk-nfc-christmas-tree')
         console.log(result);
       },
       function error(msg) {
-        console.error(msg);
+        var popup;
+
+        if (msg == "nfc_response_tag_lost" ||
+            msg == "nfc_response_io_error")
+        {
+          popup = $ionicPopup.show({
+            title: "Please scan a tag",
+            templateUrl: 'templates/scan-tag-popup.html',
+            buttons: [
+              {
+                text: 'Cancel',
+                type: 'button-default'
+              }
+            ]
+          });
+
+          // TODO: scope.
+          NfcService.watch("", function(readEvent) {
+            popup.close();
+            $scope.writeTag(records);
+          });
+        }
       }
     );
   };

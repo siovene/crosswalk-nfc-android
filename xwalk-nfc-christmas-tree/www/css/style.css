@@ -18,3 +18,12 @@ p.full-label {
   text-decoration: none;
   color: inherit;
 }
+
+.scan-tag {
+  text-align: center;
+}
+
+.scan-tag > .icon {
+  font-size: 40px;
+  font-weight: bold;
+}
