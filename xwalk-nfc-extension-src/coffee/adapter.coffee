@@ -24,13 +24,33 @@
       )
       
     clearWatch: (uuid) ->
+      new Promise((resolve, reject) =>
+        if uuid == null
+          do reject
+
+        response = n.nfc._internal.utils.sendMessage(
+          "nfc_request_clear_watch", {uuid:uuid})
+        if response.content == "nfc_response_ok"
+          @watches = (x for x in @watches when x.uuid != uuid)
+          do resolve
+        else
+          do reject
+      )
 
     write: (records, scope = "") ->
       new Promise((resolve, reject) ->
+        recordDataList =
+          (new n.nfc.NdefRecordData x.type, x.content for x in records)
+        requestRecords = (
+          {
+            type: x._internal.type
+            encodedPayload: x._internal.payload
+          } for x in recordDataList
+        )
         response = n.nfc._internal.utils.sendMessage(
-          "nfc_request_write", {records: records})
+          "nfc_request_write", {records: requestRecords})
         if response.content == "nfc_response_ok"
-          resolve
+          do resolve
         else
           reject response.args
       )

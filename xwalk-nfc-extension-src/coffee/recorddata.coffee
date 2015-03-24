@@ -54,7 +54,7 @@
       if @_internal.tnf == n.nfc._internal.TNFMap.TNF_WELL_KNOWN &&
          @_internal.type[0] == n.nfc._internal.RTDMap.RTD_TEXT[0]
         p = @_internal.payload
-        languageCodeLength = p[0] & 0x1F # 5 bits
+        languageCodeLength = p[0]
         languageCode = p.slice 1, 1 + languageCodeLength
         n.nfc._internal.EncDec.bytesToString p.slice languageCodeLength + 1
 )(navigator)
