@@ -31,15 +31,17 @@ angular.module('xwalk-nfc-christmas-tree')
     return a;
   }
 
+  function _defaultOnRead(readEvent) {
+    $rootScope.$apply(function() {
+      readEvent.timestamp = Date.now();
+      _data.readEvents.push(readEvent);
+    });
+  }
+
   function _init() {
     navigator.nfc.NFC.findAdapters().then(function(adapters) {
       _data.adapter = adapters[0];
-      _data.adapter.onread = function(readEvent) {
-        $rootScope.$apply(function() {
-          readEvent.timestamp = Date.now();
-          _data.readEvents.push(readEvent);
-        });
-      };
+      _data.adapter.onread = _defaultOnRead;
     });
   }
 
@@ -56,6 +58,12 @@ angular.module('xwalk-nfc-christmas-tree')
         scope = "";
       }
 
+      if (onRead !== undefined) {
+          _data.adapter.onread = onRead;
+      } else {
+          _data.adapter.onread = _defaultOnRead;
+      }
+
       // Prevent watching the same scope multiple times.
       for (i = 0; i < _data.watches.length; i++) {
         if (_data.watches[i].scope == scope) {
@@ -64,13 +72,20 @@ angular.module('xwalk-nfc-christmas-tree')
         }
       }
 
-      _data.adapter.onread = onRead;
       _data.adapter.watch({scope: scope}).then(function(watchId) {
         var w = new navigator.nfc.NfcWatch(scope, watchId);
         w.timestamp = Date.now();
         _data.watches.push(w);
         resolve(watchId);
       });
+    });
+  }
+
+  function _clearWatch(watchId) {
+    return _data.adapter.clearWatch(watchId).then(function() {
+        _data.watches = _data.watches.filter(function(w) {
+            w.uuid !== watchId;
+        });
     });
   }
 
@@ -83,6 +98,7 @@ angular.module('xwalk-nfc-christmas-tree')
   return {
     data: _data,
     watch: _watch,
+    clearWatch: _clearWatch,
     write: _write,
     findReadEventByUuid: _findReadEventByUuid
   };
